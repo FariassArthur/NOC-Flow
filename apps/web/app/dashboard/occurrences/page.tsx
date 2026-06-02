@@ -180,19 +180,38 @@ export default function OccurrencesPage() {
               >
                 Anterior
               </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
-                    p === page
-                      ? 'bg-accent-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]'
-                      : 'bg-slate-700/50 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              {(() => {
+                const pages: (number | string)[] = [];
+                const maxVisible = 5;
+                if (totalPages <= maxVisible + 2) {
+                  for (let i = 1; i <= totalPages; i++) pages.push(i);
+                } else {
+                  pages.push(1);
+                  const start = Math.max(2, page - 1);
+                  const end = Math.min(totalPages - 1, page + 1);
+                  if (start > 2) pages.push('...');
+                  for (let i = start; i <= end; i++) pages.push(i);
+                  if (end < totalPages - 1) pages.push('...');
+                  pages.push(totalPages);
+                }
+                return pages.map((p, idx) =>
+                  typeof p === 'string' ? (
+                    <span key={`ellipsis-${idx}`} className="text-slate-500 px-1">...</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
+                        p === page
+                          ? 'bg-accent-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.3)]'
+                          : 'bg-slate-700/50 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                );
+              })()}
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page >= totalPages}

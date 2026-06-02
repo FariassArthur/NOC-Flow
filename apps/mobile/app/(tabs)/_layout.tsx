@@ -2,18 +2,42 @@ import { useEffect, useState } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { TouchableOpacity, Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../lib/api';
+import api, { notificationAPI } from '../../lib/api';
 
-function LogoutButton() {
+function HeaderRight() {
   const router = useRouter();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const fetch = () => {
+      notificationAPI.unreadCount()
+        .then((data) => setUnread(data.count ?? 0))
+        .catch(() => {});
+    };
+    fetch();
+    const interval = setInterval(fetch, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
     router.replace('/auth/login');
   };
+
   return (
-    <TouchableOpacity onPress={handleLogout} style={{ marginRight: 16, padding: 4 }}>
-      <Text style={{ color: '#f87171', fontSize: 13, fontWeight: '600' }}>Sair</Text>
-    </TouchableOpacity>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 8 }}>
+      <TouchableOpacity onPress={() => router.push('/notifications')} style={{ padding: 8, position: 'relative' }}>
+        <Text style={{ color: '#94a3b8', fontSize: 20 }}>🔔</Text>
+        {unread > 0 && (
+          <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#f97316', minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 }}>
+            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{unread > 9 ? '9+' : unread}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleLogout} style={{ padding: 4 }}>
+        <Text style={{ color: '#f87171', fontSize: 13, fontWeight: '600' }}>Sair</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -32,7 +56,7 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: '#1e293b' },
         headerTintColor: '#f1f5f9',
         headerTitleStyle: { fontWeight: '700', fontSize: 18 },
-        headerRight: () => <LogoutButton />,
+        headerRight: () => <HeaderRight />,
         tabBarStyle: { backgroundColor: '#1e293b', borderTopColor: '#334155', borderTopWidth: 1, paddingBottom: 6, paddingTop: 6, height: 60 },
         tabBarActiveTintColor: '#f97316',
         tabBarInactiveTintColor: '#64748b',

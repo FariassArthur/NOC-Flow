@@ -5,14 +5,20 @@ import { Notification } from '../models/Notification';
 import { occurrenceSchema, updateOccurrenceSchema } from '@noc/shared';
 import type { AuthRequest } from '../middleware/auth';
 
+const sanitize = (val: any): string => {
+  if (typeof val !== 'string') return '';
+  if (val.startsWith('$')) return '';
+  return val;
+};
+
 export const listOccurrences = async (req: AuthRequest, res: Response) => {
   try {
     const { status, assignedTo, priority, search, page, limit } = req.query;
     const filter: any = {};
 
-    if (status) filter.status = status;
-    if (assignedTo) filter.assignedTo = assignedTo;
-    if (priority) filter.priority = priority;
+    if (status && typeof status === 'string') filter.status = sanitize(status);
+    if (assignedTo && typeof assignedTo === 'string') filter.assignedTo = sanitize(assignedTo);
+    if (priority && typeof priority === 'string') filter.priority = sanitize(priority);
 
     if (search && typeof search === 'string') {
       const regex = { $regex: search, $options: 'i' };
@@ -217,6 +223,27 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
     });
 
     await occurrence.save();
+
+    // Notify creator and assignee about resolution
+    const resolver = await User.findById(req.userId);
+    if (resolver) {
+      const notifyUserIds = new Set<string>();
+      const createdById = occurrence.createdBy?.toString();
+      const assignedToId = occurrence.assignedTo?.toString();
+      if (createdById && createdById !== req.userId) notifyUserIds.add(createdById);
+      if (assignedToId && assignedToId !== req.userId) notifyUserIds.add(assignedToId);
+      if (notifyUserIds.size > 0) {
+        const notifications = Array.from(notifyUserIds).map((uid) => ({
+          recipient: uid,
+          type: 'status_change' as const,
+          title: 'Ocorrência Resolvida',
+          message: `${resolver.fullName} resolveu "${occurrence.title}"`,
+          relatedOccurrence: occurrence._id.toString(),
+          read: false,
+        }));
+        await Notification.insertMany(notifications);
+      }
+    }
 
     const updated = await occurrence.populate([
       { path: 'createdBy', select: 'fullName email department cargo' },

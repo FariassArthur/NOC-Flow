@@ -8,6 +8,7 @@ import occurrenceRoutes from './routes/occurrences';
 import userRoutes from './routes/users';
 import notificationRoutes from './routes/notifications';
 import uploadRoutes from './routes/upload';
+import { authMiddleware } from './middleware/auth';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,8 +25,13 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Static files (uploads)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Auth-protected file download
+app.get('/uploads/:filename', authMiddleware, (req, res) => {
+  const filePath = path.join(process.cwd(), 'uploads', req.params.filename);
+  res.sendFile(filePath, (err) => {
+    if (err) res.status(404).json({ error: 'Arquivo não encontrado' });
+  });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

@@ -75,7 +75,7 @@ export const updatePassword = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Nova senha deve ter pelo menos 5 caracteres' });
     }
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
     res.json({ message: 'Senha alterada com sucesso' });

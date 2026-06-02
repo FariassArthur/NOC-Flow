@@ -11,7 +11,7 @@ router.use(authMiddleware);
 
 router.get('/', listUsers);
 router.get('/:id', getUser);
-router.put('/profile', updateProfile);
+router.put('/profile', validateBody(userUpdateSchema), updateProfile);
 router.put('/password', updatePassword);
 router.put('/:id', validateBody(userUpdateSchema), authorize('admin'), updateUser);
 router.delete('/:id', authorize('admin'), deleteUser);

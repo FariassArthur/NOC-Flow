@@ -367,7 +367,7 @@ export default function OccurrenceDetailPage() {
               {occurrence.attachments.map((att: any, idx: number) => (
                 <a
                   key={att._id || idx}
-                  href={`http://localhost:3001${att.fileUrl}`}
+                  href={`${process.env.NEXT_PUBLIC_API_URL || ''}${att.fileUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 rounded-lg text-sm text-slate-300 hover:text-accent-400 border border-slate-600/30 hover:border-accent-500/30 transition-all"
