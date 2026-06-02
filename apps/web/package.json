@@ -1,0 +1,35 @@
+{
+  "name": "@noc/web",
+  "version": "1.0.0",
+  "description": "NOC Web Application",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["noc", "next.js", "react"],
+  "author": "Network Analysis Team",
+  "license": "MIT",
+  "dependencies": {
+    "@noc/api-client": "workspace:*",
+    "@noc/shared": "workspace:*",
+    "axios": "^1.6.7",
+    "next": "15.0.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-hook-form": "^7.48.0",
+    "swr": "^2.2.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.3.3"
+  }
+}
