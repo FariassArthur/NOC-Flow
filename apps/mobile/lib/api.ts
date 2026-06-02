@@ -47,7 +47,7 @@ export const authAPI = {
 export const occurrenceAPI = {
   list: async (params?: Record<string, string>) => {
     const { data } = await api.get('/api/occurrences', { params });
-    return data.data || data;
+    return data;
   },
   get: async (id: string) => {
     const { data } = await api.get(`/api/occurrences/${id}`);
@@ -80,6 +80,18 @@ export const occurrenceAPI = {
     const { data } = await api.post(`/api/occurrences/${id}/attachments`, { fileName, fileUrl });
     return data;
   },
+  uploadFile: async (fileUri: string, fileName: string) => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: fileUri,
+      name: fileName,
+      type: 'application/octet-stream',
+    } as any);
+    const { data } = await api.post('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  },
 };
 
 export const userAPI = {
@@ -94,6 +106,13 @@ export const userAPI = {
   updatePassword: async (currentPassword: string, newPassword: string) => {
     const { data } = await api.put('/api/users/password', { currentPassword, newPassword });
     return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/users/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/users/${id}`);
   },
 };
 

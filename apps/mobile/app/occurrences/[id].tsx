@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { occurrenceAPI, authAPI } from '../../lib/api';
+import * as DocumentPicker from 'expo-document-picker';
+import { occurrenceAPI, authAPI, userAPI } from '../../lib/api';
 import StatusBadge from '../../components/StatusBadge';
 import PriorityBadge from '../../components/PriorityBadge';
 
@@ -16,12 +17,14 @@ export default function OccurrenceDetail() {
   const router = useRouter();
   const [occurrence, setOccurrence] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
   const [resolucao, setResolucao] = useState('');
   const [resolving, setResolving] = useState(false);
   const [resError, setResError] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
   const isNoc = user?.department === 'NOC';
 
@@ -30,8 +33,9 @@ export default function OccurrenceDetail() {
     Promise.all([
       occurrenceAPI.get(id as string),
       authAPI.me().catch(() => null),
+      userAPI.list().catch(() => []),
     ])
-      .then(([occ, u]) => { setOccurrence(occ); setUser(u); })
+      .then(([occ, u, ulist]) => { setOccurrence(occ); setUser(u); setUsers(ulist); })
       .catch(() => router.back())
       .finally(() => setLoading(false));
   }, [id]);
@@ -79,6 +83,31 @@ export default function OccurrenceDetail() {
     ]);
   };
 
+  const handleAssign = async (userId: string) => {
+    if (!occurrence) return;
+    setAssigning(true);
+    try {
+      const updated = await occurrenceAPI.assign(occurrence._id, userId);
+      setOccurrence(updated);
+    } catch (err: any) {
+      Alert.alert('Erro', err.response?.data?.error || 'Erro ao atribuir');
+    } finally { setAssigning(false); }
+  };
+
+  const pickAssign = () => {
+    const assignedId = occurrence?.assignedTo?._id;
+    const options = users
+      .filter((u: any) => u._id !== assignedId)
+      .map((u: any) => ({
+        text: `${u.fullName} · ${u.department}`,
+        onPress: () => void handleAssign(u._id),
+      }));
+    options.push({ text: 'Cancelar', onPress: () => {} });
+    Alert.alert('Atribuir Responsável', 'Selecione um usuário:', options);
+  };
+
+  const inputStyle = { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, color: '#f1f5f9', fontSize: 14, borderWidth: 1, borderColor: '#334155' };
+
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
@@ -95,17 +124,20 @@ export default function OccurrenceDetail() {
     );
   }
 
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001';
   const created = occurrence.createdBy || {};
   const assigned = occurrence.assignedTo || {};
   const resolvedUser = occurrence.resolvidoPor || {};
   const transitions = statusTransitions[occurrence.status] || [];
   const isOverdue = occurrence.dueDate && new Date(occurrence.dueDate) < new Date() && occurrence.status !== 'finalizada';
+  const attachments = occurrence.attachments || [];
 
   return (
     <>
       <Stack.Screen options={{ title: occurrence.title?.slice(0, 30) || 'Detalhe', headerStyle: { backgroundColor: '#1e293b' }, headerTintColor: '#f1f5f9' }} />
       <ScrollView style={{ flex: 1, backgroundColor: '#0f172a' }}>
         <View style={{ padding: 16, gap: 16 }}>
+          {/* Cabeçalho */}
           <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
               <View style={{ flex: 1, marginRight: 8 }}>
@@ -118,11 +150,9 @@ export default function OccurrenceDetail() {
                 <Text style={{ color: '#64748b', fontSize: 12 }}>{new Date(occurrence.createdAt).toLocaleString('pt-BR')}</Text>
               </View>
             </View>
-
             <View style={{ borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 12 }}>
               <Text style={{ color: '#cbd5e1', fontSize: 14, lineHeight: 22 }}>{occurrence.description}</Text>
             </View>
-
             {occurrence.tags?.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                 {occurrence.tags.map((tag: string) => (
@@ -134,6 +164,7 @@ export default function OccurrenceDetail() {
             )}
           </View>
 
+          {/* Info: Responsável + Prazo */}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 1, backgroundColor: '#1e293b', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#334155' }}>
               <Text style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Responsável</Text>
@@ -153,6 +184,65 @@ export default function OccurrenceDetail() {
             </View>
           </View>
 
+          {/* Atribuição (NOC) */}
+          {isNoc && occurrence.status !== 'finalizada' && (
+            <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>
+                {assigned.fullName ? 'Reatribuir Responsável' : 'Atribuir Responsável'}
+              </Text>
+              <TouchableOpacity
+                onPress={pickAssign}
+                disabled={assigning}
+                style={{ backgroundColor: '#334155', borderRadius: 12, padding: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#f97316', fontWeight: '600' }}>
+                  {assigning ? 'Atribuindo...' : assigned.fullName ? 'Trocar Responsável' : 'Selecionar Responsável'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Anexos */}
+          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+            <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Anexos</Text>
+            {attachments.length === 0 ? (
+              <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 8 }}>Nenhum anexo</Text>
+            ) : (
+              attachments.map((att: any, idx: number) => (
+                <TouchableOpacity
+                  key={att._id || idx}
+                  onPress={() => Linking.openURL(`${API_URL}${att.fileUrl}`)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: idx < attachments.length - 1 ? 1 : 0, borderBottomColor: '#334155' }}
+                >
+                  <Text style={{ color: '#f97316', fontSize: 14 }}>📎</Text>
+                  <Text style={{ color: '#cbd5e1', fontSize: 13, flex: 1 }}>{att.fileName}</Text>
+                  <Text style={{ color: '#64748b', fontSize: 11 }}>Abrir</Text>
+                </TouchableOpacity>
+              ))
+            )}
+            {occurrence.status !== 'finalizada' && (
+              <TouchableOpacity
+                onPress={async () => {
+                  try {
+                    const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+                    if (result.canceled) return;
+                    const file = result.assets[0];
+                    const uploadRes = await occurrenceAPI.uploadFile(file.uri, file.name);
+                    const updated = await occurrenceAPI.addAttachment(occurrence._id, uploadRes.fileName, uploadRes.fileUrl);
+                    setOccurrence(updated);
+                    Alert.alert('Sucesso', 'Arquivo anexado');
+                  } catch (err: any) {
+                    Alert.alert('Erro', err.response?.data?.error || 'Erro ao anexar arquivo');
+                  }
+                }}
+                style={{ marginTop: 8, backgroundColor: '#334155', borderRadius: 12, padding: 14, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#f97316', fontWeight: '600', fontSize: 13 }}>+ Anexar Arquivo</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Resolução/Status (NOC) */}
           {isNoc && occurrence.status !== 'finalizada' && (
             <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
               <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>
@@ -188,6 +278,7 @@ export default function OccurrenceDetail() {
             </View>
           )}
 
+          {/* Resolução exibida */}
           {occurrence.resolucao && (
             <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
               <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Resolução / Corretivas</Text>
@@ -203,6 +294,7 @@ export default function OccurrenceDetail() {
             </View>
           )}
 
+          {/* Transições de status (NOC) */}
           {isNoc && occurrence.status !== 'finalizada' && transitions.length > 0 && occurrence.status !== 'em_execucao' && (
             <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
               <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Alterar Status</Text>
@@ -219,9 +311,9 @@ export default function OccurrenceDetail() {
             </View>
           )}
 
+          {/* Comentários */}
           <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
             <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>Comentários</Text>
-
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               <TextInput
                 value={comment}
@@ -238,7 +330,6 @@ export default function OccurrenceDetail() {
                 <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>{sending ? '...' : 'Enviar'}</Text>
               </TouchableOpacity>
             </View>
-
             {(!occurrence.comments || occurrence.comments.length === 0) ? (
               <Text style={{ color: '#64748b', textAlign: 'center', paddingVertical: 16 }}>Nenhum comentário ainda</Text>
             ) : (
@@ -259,6 +350,7 @@ export default function OccurrenceDetail() {
             )}
           </View>
 
+          {/* Histórico */}
           {occurrence.history?.length > 0 && (
             <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
               <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>Histórico</Text>
