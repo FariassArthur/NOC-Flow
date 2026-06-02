@@ -71,15 +71,41 @@ export default function ReportsPage() {
     { label: 'Sem responsável', value: unassigned },
   ];
 
+  const exportCSV = () => {
+    const headers = ['Título', 'Status', 'Prioridade', 'Categoria', 'Criado por', 'Departamento', 'Responsável', 'Criado em', 'Resolvido em', 'Tempo (min)', 'Tags'];
+    const rows = occurrences.map((o: any) => {
+      const c = o.createdBy as any;
+      const a = o.assignedTo as any;
+      const cat = o.category as any;
+      return [
+        `"${o.title}"`, o.status, o.priority, `"${cat?.name || ''}"`, `"${c?.fullName || ''}"`, `"${c?.department || ''}"`,
+        `"${a?.fullName || ''}"`, new Date(o.createdAt).toISOString().slice(0, 10),
+        o.resolvidoEm ? new Date(o.resolvidoEm).toISOString().slice(0, 10) : '', o.timeSpentMinutes || 0, `"${(o.tags || []).join('; ')}"`,
+      ].join(',');
+    });
+    const blob = new Blob([headers.join(','), '\n', rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `relatorio-ocorrencias-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return <div className="text-center py-12 text-slate-500">Carregando...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Relatórios</h1>
-        <p className="text-slate-400 mt-1">Análise geral das ocorrências</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Relatórios</h1>
+          <p className="text-slate-400 mt-1">Análise geral das ocorrências</p>
+        </div>
+        <button onClick={exportCSV} className="btn-secondary text-sm flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Exportar CSV
+        </button>
       </div>
 
       {/* KPI Cards */}

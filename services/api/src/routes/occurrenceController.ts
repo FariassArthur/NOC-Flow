@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Occurrence } from '../models/Occurrence';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
+import Category from '../models/Category';
 import { occurrenceSchema, updateOccurrenceSchema } from '@noc/shared';
 import type { AuthRequest } from '../middleware/auth';
 
@@ -37,6 +38,9 @@ export const listOccurrences = async (req: AuthRequest, res: Response) => {
       Occurrence.find(filter)
         .populate('createdBy', 'fullName email department cargo')
         .populate('assignedTo', 'fullName email department cargo')
+        .populate('category', 'name color')
+        .populate('equipment', 'name type ip location')
+        .populate('service', 'name type provider')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNum),
@@ -60,6 +64,9 @@ export const getOccurrence = async (req: AuthRequest, res: Response) => {
     const occurrence = await Occurrence.findById(id)
       .populate('createdBy', 'fullName email department cargo')
       .populate('assignedTo', 'fullName email department cargo')
+      .populate('category', 'name color')
+      .populate('equipment', 'name type ip location')
+      .populate('service', 'name type provider')
       .populate('comments.author', 'fullName email department cargo')
       .populate('history.changedBy', 'fullName email department cargo');
 
@@ -110,6 +117,9 @@ export const createOccurrence = async (req: AuthRequest, res: Response) => {
     const populated = await occurrence.populate([
       { path: 'createdBy', select: 'fullName email department cargo' },
       { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
     ]);
 
     res.status(201).json(populated);
@@ -173,6 +183,9 @@ export const updateOccurrence = async (req: AuthRequest, res: Response) => {
     const updated = await occurrence.populate([
       { path: 'createdBy', select: 'fullName email department cargo' },
       { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
     ]);
 
     res.json(updated);
@@ -249,6 +262,9 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
       { path: 'createdBy', select: 'fullName email department cargo' },
       { path: 'assignedTo', select: 'fullName email department cargo' },
       { path: 'resolvidoPor', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
     ]);
 
     res.json(updated);
@@ -300,6 +316,9 @@ export const addAttachment = async (req: AuthRequest, res: Response) => {
     const updated = await occurrence.populate([
       { path: 'createdBy', select: 'fullName email department cargo' },
       { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
     ]);
 
     res.json(updated);
@@ -365,6 +384,130 @@ export const assignOccurrence = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const startTimer = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    if (occurrence.status === 'finalizada')
+      return res.status(400).json({ error: 'Ocorrência finalizada' });
+
+    occurrence.timeTracking = {
+      startTime: new Date(),
+      endTime: undefined,
+      pausedMinutes: occurrence.timeTracking?.pausedMinutes || 0,
+      status: 'running',
+    };
+    await occurrence.save();
+    res.json(occurrence);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const pauseTimer = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    if (!occurrence.timeTracking || occurrence.timeTracking.status !== 'running')
+      return res.status(400).json({ error: 'Timer não está em execução' });
+
+    const elapsed = (Date.now() - new Date(occurrence.timeTracking.startTime!).getTime()) / 60000;
+    occurrence.timeTracking.pausedMinutes += Math.round(elapsed * 100) / 100;
+    occurrence.timeTracking.status = 'paused';
+    occurrence.timeTracking.startTime = undefined;
+    await occurrence.save();
+    res.json(occurrence);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const stopTimer = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    if (occurrence.timeTracking?.status !== 'running' && occurrence.timeTracking?.status !== 'paused')
+      return res.status(400).json({ error: 'Timer não iniciado' });
+
+    let totalMinutes = occurrence.timeTracking.pausedMinutes || 0;
+    if (occurrence.timeTracking.startTime) {
+      totalMinutes += (Date.now() - new Date(occurrence.timeTracking.startTime).getTime()) / 60000;
+    }
+    occurrence.timeSpentMinutes += Math.round(totalMinutes);
+    occurrence.timeTracking = { startTime: undefined, endTime: new Date(), pausedMinutes: 0, status: 'stopped' };
+    await occurrence.save();
+    res.json(occurrence);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const addRCA = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { causaRaiz, tipo, impacto, acoesPreventivas } = req.body;
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    if (occurrence.status !== 'finalizada')
+      return res.status(400).json({ error: 'RCA só pode ser registrada em ocorrências finalizadas' });
+
+    occurrence.rca = { causaRaiz, tipo, impacto, acoesPreventivas };
+    occurrence.history.push({
+      field: 'rca',
+      oldValue: '',
+      newValue: `RCA: ${causaRaiz.substring(0, 50)}...`,
+      changedBy: req.userId as any,
+      changedAt: new Date(),
+    });
+    await occurrence.save();
+
+    const updated = await occurrence.populate([
+      { path: 'createdBy', select: 'fullName email department cargo' },
+      { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
+    ]);
+    res.json(updated);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+export const addCommLog = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { contactName, contactType, description } = req.body;
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+
+    if (!occurrence.commLog) occurrence.commLog = [];
+    occurrence.commLog.push({ contactName, contactType, description, createdAt: new Date() } as any);
+    occurrence.history.push({
+      field: 'commLog',
+      oldValue: '',
+      newValue: `Contato: ${contactName} (${contactType})`,
+      changedBy: req.userId as any,
+      changedAt: new Date(),
+    });
+    await occurrence.save();
+
+    const updated = await occurrence.populate([
+      { path: 'createdBy', select: 'fullName email department cargo' },
+      { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
+    ]);
+    res.json(updated);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 export const addComment = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -408,6 +551,10 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     const updated = await occurrence.populate([
       { path: 'comments.author', select: 'fullName email department cargo' },
       { path: 'createdBy', select: 'fullName email department cargo' },
+      { path: 'assignedTo', select: 'fullName email department cargo' },
+      { path: 'category', select: 'name color' },
+      { path: 'equipment', select: 'name type ip location' },
+      { path: 'service', select: 'name type provider' },
     ]);
 
     res.json(updated);

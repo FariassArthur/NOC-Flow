@@ -8,6 +8,11 @@ import occurrenceRoutes from './routes/occurrences';
 import userRoutes from './routes/users';
 import notificationRoutes from './routes/notifications';
 import uploadRoutes from './routes/upload';
+import categoryRoutes from './routes/categories';
+import equipmentRoutes from './routes/equipment';
+import serviceRoutes from './routes/services';
+import runbookRoutes from './routes/runbooks';
+import escalationRoutes from './routes/escalations';
 import { authMiddleware } from './middleware/auth';
 
 const app = express();
@@ -39,6 +44,11 @@ app.use('/api/occurrences', occurrenceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/runbooks', runbookRoutes);
+app.use('/api/escalations', escalationRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

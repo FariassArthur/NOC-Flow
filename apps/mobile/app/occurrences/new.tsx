@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, FlatList, Modal } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { occurrenceAPI, userAPI } from '../../lib/api';
+import { occurrenceAPI, userAPI, categoryAPI, equipmentAPI, serviceAPI } from '../../lib/api';
 
 const priorities = [
   { value: 'baixa', label: 'Baixa' },
@@ -23,9 +23,23 @@ export default function NewOccurrence() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [showUserPicker, setShowUserPicker] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedEquipment, setSelectedEquipment] = useState('');
+  const [selectedService, setSelectedService] = useState('');
+  const [showCatPicker, setShowCatPicker] = useState(false);
+  const [showEquipPicker, setShowEquipPicker] = useState(false);
+  const [showServicePicker, setShowServicePicker] = useState(false);
 
   useEffect(() => {
-    userAPI.list().then(setUsers).catch(() => {});
+    Promise.all([
+      userAPI.list().then(setUsers).catch(() => {}),
+      categoryAPI.list().then(setCategories).catch(() => {}),
+      equipmentAPI.list().then(setEquipment).catch(() => {}),
+      serviceAPI.list().then(setServices).catch(() => {}),
+    ]);
   }, []);
 
   const handleSubmit = async () => {
@@ -37,6 +51,9 @@ export default function NewOccurrence() {
       const payload: any = { title, description, priority, tags: tagList, status: 'aberta', timeSpentMinutes: 0 };
       if (assignedTo) payload.assignedTo = assignedTo;
       if (dueDate) payload.dueDate = new Date(dueDate).toISOString();
+      if (selectedCategory) payload.category = selectedCategory;
+      if (selectedEquipment) payload.equipment = selectedEquipment;
+      if (selectedService) payload.service = selectedService;
       const created = await occurrenceAPI.create(payload);
       router.replace(`/occurrences/${created._id}`);
     } catch (err: any) {

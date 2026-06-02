@@ -1,11 +1,12 @@
 import { ObjectId } from 'mongodb';
+import type { TimeTracking, RCA, CommLogEntry } from './noc';
 
 export type OccurrenceStatus = 'aberta' | 'em_execucao' | 'finalizada';
 export type Priority = 'baixa' | 'média' | 'alta' | 'crítica';
 
 export interface Comment {
   _id?: ObjectId | string;
-  author: string; // user ID
+  author: string;
   text: string;
   createdAt: Date;
 }
@@ -22,35 +23,41 @@ export interface HistoryEntry {
   field: string;
   oldValue: string;
   newValue: string;
-  changedBy: string; // user ID
+  changedBy: string;
   changedAt: Date;
 }
 
 export interface Occurrence {
   _id?: ObjectId | string;
 
-  // BÁSICO
   title: string;
   description: string;
   status: OccurrenceStatus;
   createdAt: Date;
 
-  // ATRIBUIÇÃO
-  assignedTo?: string; // user ID
+  assignedTo?: string;
   priority: Priority;
   tags: string[];
 
-  // SLA & HISTÓRICO
   dueDate?: Date;
   timeSpentMinutes: number;
-  createdBy: string; // user ID
+  createdBy: string;
 
-  // CORRETIVAS (preenchido pelo NOC)
   resolucao?: string;
-  resolvidoPor?: string; // user ID
+  resolvidoPor?: string;
   resolvidoEm?: Date;
 
-  // COMPLETO
+  // NOC fields
+  category?: string;
+  equipment?: string;
+  service?: string;
+  timeTracking?: TimeTracking;
+  rca?: RCA;
+  commLog?: CommLogEntry[];
+
+  slaStatus?: 'dentro' | 'atrasado' | 'violado';
+  slaBreachedAt?: Date;
+
   comments: Comment[];
   attachments: Attachment[];
   history: HistoryEntry[];

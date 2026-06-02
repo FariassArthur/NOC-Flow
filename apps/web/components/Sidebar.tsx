@@ -69,14 +69,34 @@ export default function Sidebar() {
   }, []);
 
   const isAdmin = currentUser?.role === 'admin';
+  const [adminOpen, setAdminOpen] = useState(false);
+
+  const adminSubItems = [
+    { href: '/dashboard/admin/users', label: 'Usuários' },
+    { href: '/dashboard/admin/categories', label: 'Categorias' },
+    { href: '/dashboard/admin/equipment', label: 'Equipamentos' },
+    { href: '/dashboard/admin/services', label: 'Serviços' },
+    { href: '/dashboard/admin/escalations', label: 'Escalonamento' },
+  ];
+
   const navItems = [
     ...defaultNavItems,
+    {
+      href: '/dashboard/runbooks',
+      label: 'Runbooks',
+      icon: (
+        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+    },
     ...(isAdmin ? [{
-      href: '/dashboard/admin/users',
+      href: '#',
       label: 'Admin',
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
     }] : []),
@@ -141,6 +161,57 @@ export default function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1.5 relative z-10">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          const isAdminToggle = item.href === '#' && item.label === 'Admin';
+          if (isAdminToggle) {
+            const isAnyAdminActive = adminSubItems.some((s) => pathname === s.href);
+            return (
+              <div key="admin-toggle">
+                <button
+                  onClick={() => isExpanded && setAdminOpen(!adminOpen)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    isAnyAdminActive
+                      ? 'bg-accent-500/10 text-accent-500 border border-accent-500/20'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/40 border border-transparent'
+                  }`}
+                  title={!isExpanded ? item.label : undefined}
+                >
+                  <span className="relative">{item.icon}</span>
+                  {isExpanded && (
+                    <>
+                      <span className="truncate flex-1 text-left">{item.label}</span>
+                      <svg
+                        className={`w-4 h-4 transition-transform ${adminOpen ? 'rotate-90' : ''}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+                {isExpanded && adminOpen && (
+                  <div className="ml-4 mt-1 space-y-1 border-l border-slate-700/50 pl-3">
+                    {adminSubItems.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            isSubActive
+                              ? 'text-accent-500 bg-accent-500/10'
+                              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/30'
+                          }`}
+                        >
+                          <span className="w-1 h-1 rounded-full bg-current shrink-0" />
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
           return (
             <Link
               key={item.href}

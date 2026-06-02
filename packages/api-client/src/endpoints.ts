@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { LoginInput, UserInput, OccurrenceInput, Occurrence, UserWithoutPassword, AuthToken, Notification, PaginatedResponse } from '@noc/shared';
+import type { LoginInput, UserInput, OccurrenceInput, Occurrence, UserWithoutPassword, AuthToken, Notification, PaginatedResponse, Category, Equipment, Service, Runbook, EscalationRule } from '@noc/shared';
 
 // Auth Endpoints
 export const authAPI = {
@@ -78,6 +78,149 @@ export const occurrenceAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
+  },
+
+  // NOC: Time tracking
+  startTimer: async (id: string) => {
+    const response = await apiClient.instance.post<Occurrence>(`/api/occurrences/${id}/timer/start`);
+    return response.data;
+  },
+
+  pauseTimer: async (id: string) => {
+    const response = await apiClient.instance.post<Occurrence>(`/api/occurrences/${id}/timer/pause`);
+    return response.data;
+  },
+
+  stopTimer: async (id: string) => {
+    const response = await apiClient.instance.post<Occurrence>(`/api/occurrences/${id}/timer/stop`);
+    return response.data;
+  },
+
+  // NOC: RCA
+  addRCA: async (id: string, data: { causaRaiz: string; tipo: string; impacto: string; acoesPreventivas?: string }) => {
+    const response = await apiClient.instance.put<Occurrence>(`/api/occurrences/${id}/rca`, data);
+    return response.data;
+  },
+
+  // NOC: Communication Log
+  addCommLog: async (id: string, data: { contactName: string; contactType: string; description: string }) => {
+    const response = await apiClient.instance.post<Occurrence>(`/api/occurrences/${id}/commlog`, data);
+    return response.data;
+  },
+};
+
+// NOC: Category Endpoints
+export const categoryAPI = {
+  list: async () => {
+    const response = await apiClient.instance.get<Category[]>('/api/categories');
+    return response.data;
+  },
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<Category>(`/api/categories/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<Category>) => {
+    const response = await apiClient.instance.post<Category>('/api/categories', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Category>) => {
+    const response = await apiClient.instance.put<Category>(`/api/categories/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.instance.delete(`/api/categories/${id}`);
+  },
+};
+
+// NOC: Equipment Endpoints
+export const equipmentAPI = {
+  list: async (params?: { type?: string; status?: string; search?: string }) => {
+    const response = await apiClient.instance.get<Equipment[]>('/api/equipment', { params });
+    return response.data;
+  },
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<Equipment>(`/api/equipment/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<Equipment>) => {
+    const response = await apiClient.instance.post<Equipment>('/api/equipment', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Equipment>) => {
+    const response = await apiClient.instance.put<Equipment>(`/api/equipment/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.instance.delete(`/api/equipment/${id}`);
+  },
+};
+
+// NOC: Service Endpoints
+export const serviceAPI = {
+  list: async (params?: { type?: string; status?: string; search?: string }) => {
+    const response = await apiClient.instance.get<Service[]>('/api/services', { params });
+    return response.data;
+  },
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<Service>(`/api/services/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<Service>) => {
+    const response = await apiClient.instance.post<Service>('/api/services', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Service>) => {
+    const response = await apiClient.instance.put<Service>(`/api/services/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.instance.delete(`/api/services/${id}`);
+  },
+};
+
+// NOC: Runbook Endpoints
+export const runbookAPI = {
+  list: async (params?: { category?: string; search?: string }) => {
+    const response = await apiClient.instance.get<Runbook[]>('/api/runbooks', { params });
+    return response.data;
+  },
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<Runbook>(`/api/runbooks/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<Runbook>) => {
+    const response = await apiClient.instance.post<Runbook>('/api/runbooks', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Runbook>) => {
+    const response = await apiClient.instance.put<Runbook>(`/api/runbooks/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.instance.delete(`/api/runbooks/${id}`);
+  },
+};
+
+// NOC: Escalation Rule Endpoints
+export const escalationAPI = {
+  list: async () => {
+    const response = await apiClient.instance.get<EscalationRule[]>('/api/escalations');
+    return response.data;
+  },
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<EscalationRule>(`/api/escalations/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<EscalationRule>) => {
+    const response = await apiClient.instance.post<EscalationRule>('/api/escalations', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<EscalationRule>) => {
+    const response = await apiClient.instance.put<EscalationRule>(`/api/escalations/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    await apiClient.instance.delete(`/api/escalations/${id}`);
   },
 };
 

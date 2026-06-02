@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { occurrenceAPI, userAPI } from '@noc/api-client';
+import { occurrenceAPI, userAPI, categoryAPI, equipmentAPI, serviceAPI } from '@noc/api-client';
 
 const priorities = [
   { value: 'baixa', label: 'Baixa' },
@@ -15,6 +15,9 @@ const priorities = [
 export default function NewOccurrencePage() {
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -22,12 +25,20 @@ export default function NewOccurrencePage() {
     tags: '',
     assignedTo: '',
     dueDate: '',
+    category: '',
+    equipment: '',
+    service: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    userAPI.list().then(setUsers).catch(() => {});
+    Promise.all([
+      userAPI.list().then(setUsers).catch(() => {}),
+      categoryAPI.list().then(setCategories).catch(() => {}),
+      equipmentAPI.list().then(setEquipment).catch(() => {}),
+      serviceAPI.list().then(setServices).catch(() => {}),
+    ]);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -54,6 +65,9 @@ export default function NewOccurrencePage() {
         assignedTo: form.assignedTo || undefined,
         dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
         timeSpentMinutes: 0,
+        category: form.category || undefined,
+        equipment: form.equipment || undefined,
+        service: form.service || undefined,
       });
 
       router.push(`/dashboard/occurrences/${created._id}`);
@@ -166,6 +180,36 @@ export default function NewOccurrencePage() {
               className="input-field"
               placeholder="Ex: rede, link, urgente"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Categoria</label>
+            <select name="category" value={form.category} onChange={handleChange} className="input-field">
+              <option value="">Sem categoria</option>
+              {categories.map((c: any) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Equipamento</label>
+            <select name="equipment" value={form.equipment} onChange={handleChange} className="input-field">
+              <option value="">Sem equipamento</option>
+              {equipment.map((e: any) => (
+                <option key={e._id} value={e._id}>{e.name} ({e.type})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Serviço</label>
+            <select name="service" value={form.service} onChange={handleChange} className="input-field">
+              <option value="">Sem serviço</option>
+              {services.map((s: any) => (
+                <option key={s._id} value={s._id}>{s.name}</option>
+              ))}
+            </select>
           </div>
         </div>
 
