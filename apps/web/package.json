@@ -9,7 +9,11 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["noc", "next.js", "react"],
+  "keywords": [
+    "noc",
+    "next.js",
+    "react"
+  ],
   "author": "Network Analysis Team",
   "license": "MIT",
   "dependencies": {
@@ -20,6 +24,7 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.48.0",
+    "recharts": "^3.8.1",
     "swr": "^2.2.4",
     "zod": "^3.22.4"
   },

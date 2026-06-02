@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import type { User } from '@noc/shared';
+import type { User as UserType } from '@noc/shared';
 
-const userSchema = new mongoose.Schema<User>(
+const userSchema = new mongoose.Schema<UserType>(
   {
     username: {
       type: String,
@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema<User>(
       type: String,
       required: true,
     },
+    cargo: {
+      type: String,
+      required: true,
+    },
     role: {
       type: String,
       enum: ['viewer', 'analyst', 'admin'],
@@ -38,4 +42,4 @@ const userSchema = new mongoose.Schema<User>(
   { timestamps: true }
 );
 
-export const User = mongoose.model<User>('User', userSchema);
+export const User = mongoose.model<UserType>('User', userSchema);

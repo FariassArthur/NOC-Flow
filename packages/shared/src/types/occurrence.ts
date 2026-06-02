@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 
-export type OccurrenceStatus = 'aberta' | 'em_andamento' | 'pausada' | 'fechada';
+export type OccurrenceStatus = 'aberta' | 'em_execucao' | 'finalizada';
 export type Priority = 'baixa' | 'média' | 'alta' | 'crítica';
 
 export interface Comment {
@@ -45,10 +45,22 @@ export interface Occurrence {
   timeSpentMinutes: number;
   createdBy: string; // user ID
 
+  // CORRETIVAS (preenchido pelo NOC)
+  resolucao?: string;
+  resolvidoPor?: string; // user ID
+  resolvidoEm?: Date;
+
   // COMPLETO
   comments: Comment[];
   attachments: Attachment[];
   history: HistoryEntry[];
 
   updatedAt: Date;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
 }

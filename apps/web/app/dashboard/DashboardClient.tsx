@@ -32,7 +32,7 @@ export default function DashboardClient({
   return (
     <div className="flex min-h-screen bg-slate-900">
       <Sidebar />
-      <main className="flex-1 overflow-auto p-8">
+      <main className="flex-1 overflow-auto p-6 lg:p-8">
         {children}
       </main>
     </div>

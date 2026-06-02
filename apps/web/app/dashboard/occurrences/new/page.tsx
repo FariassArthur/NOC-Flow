@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { occurrenceAPI } from '@noc/api-client';
+import { occurrenceAPI, userAPI } from '@noc/api-client';
 
 const priorities = [
   { value: 'baixa', label: 'Baixa' },
@@ -14,14 +14,21 @@ const priorities = [
 
 export default function NewOccurrencePage() {
   const router = useRouter();
+  const [users, setUsers] = useState<any[]>([]);
   const [form, setForm] = useState({
     title: '',
     description: '',
     priority: 'média',
     tags: '',
+    assignedTo: '',
+    dueDate: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    userAPI.list().then(setUsers).catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,6 +50,10 @@ export default function NewOccurrencePage() {
         description: form.description,
         priority: form.priority as any,
         tags,
+        status: 'aberta' as const,
+        assignedTo: form.assignedTo || undefined,
+        dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
+        timeSpentMinutes: 0,
       });
 
       router.push(`/dashboard/occurrences/${created._id}`);
@@ -96,32 +107,66 @@ export default function NewOccurrencePage() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5">Prioridade</label>
-          <select
-            name="priority"
-            value={form.priority}
-            onChange={handleChange}
-            className="input-field"
-          >
-            {priorities.map((p) => (
-              <option key={p.value} value={p.value}>{p.label}</option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Prioridade</label>
+            <select
+              name="priority"
+              value={form.priority}
+              onChange={handleChange}
+              className="input-field"
+            >
+              {priorities.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Responsável</label>
+            <select
+              name="assignedTo"
+              value={form.assignedTo}
+              onChange={handleChange}
+              className="input-field"
+            >
+              <option value="">Não atribuir</option>
+              {users.map((u: any) => (
+                <option key={u._id} value={u._id}>
+                  {u.fullName} · {u.department}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-1.5">
-            Tags <span className="text-slate-500">(separadas por vírgula)</span>
-          </label>
-          <input
-            type="text"
-            name="tags"
-            value={form.tags}
-            onChange={handleChange}
-            className="input-field"
-            placeholder="Ex: rede, link, urgente"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Prazo <span className="text-slate-500">(opcional)</span>
+            </label>
+            <input
+              type="date"
+              name="dueDate"
+              value={form.dueDate}
+              onChange={handleChange}
+              className="input-field"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Tags <span className="text-slate-500">(separadas por vírgula)</span>
+            </label>
+            <input
+              type="text"
+              name="tags"
+              value={form.tags}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="Ex: rede, link, urgente"
+            />
+          </div>
         </div>
 
         <div className="flex gap-3 pt-2">

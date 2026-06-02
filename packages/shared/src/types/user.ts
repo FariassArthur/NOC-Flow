@@ -7,6 +7,7 @@ export interface User {
   password: string;
   fullName: string;
   department: string;
+  cargo: string;
   role: 'viewer' | 'analyst' | 'admin';
   avatar?: string;
   createdAt: Date;

@@ -22,9 +22,8 @@ const config: Config = {
         },
         status: {
           aberta: '#ef4444',
-          em_andamento: '#f59e0b',
-          pausada: '#8b5cf6',
-          fechada: '#10b981',
+          em_execucao: '#f59e0b',
+          finalizada: '#10b981',
         },
       },
     },

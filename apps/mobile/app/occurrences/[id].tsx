@@ -1,0 +1,285 @@
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { occurrenceAPI, authAPI } from '../../lib/api';
+import StatusBadge from '../../components/StatusBadge';
+import PriorityBadge from '../../components/PriorityBadge';
+
+const statusTransitions: Record<string, string[]> = {
+  aberta: ['em_execucao'],
+  em_execucao: ['finalizada'],
+  finalizada: [],
+};
+
+export default function OccurrenceDetail() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
+  const [occurrence, setOccurrence] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [comment, setComment] = useState('');
+  const [sending, setSending] = useState(false);
+  const [resolucao, setResolucao] = useState('');
+  const [resolving, setResolving] = useState(false);
+  const [resError, setResError] = useState('');
+
+  const isNoc = user?.department === 'NOC';
+
+  useEffect(() => {
+    if (!id) return;
+    Promise.all([
+      occurrenceAPI.get(id as string),
+      authAPI.me().catch(() => null),
+    ])
+      .then(([occ, u]) => { setOccurrence(occ); setUser(u); })
+      .catch(() => router.back())
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!occurrence) return;
+    try {
+      const updated = await occurrenceAPI.update(occurrence._id, { status: newStatus });
+      setOccurrence(updated);
+    } catch {}
+  };
+
+  const handleResolve = async () => {
+    if (!occurrence || !resolucao.trim()) return;
+    if (resolucao.trim().length < 10) { setResError('Mínimo 10 caracteres'); return; }
+    setResError('');
+    setResolving(true);
+    try {
+      const updated = await occurrenceAPI.resolve(occurrence._id, resolucao);
+      setOccurrence(updated);
+      setResolucao('');
+    } catch (err: any) {
+      setResError(err.response?.data?.error || 'Erro ao registrar corretiva');
+    } finally { setResolving(false); }
+  };
+
+  const handleAddComment = async () => {
+    if (!occurrence || !comment.trim()) return;
+    setSending(true);
+    try {
+      const updated = await occurrenceAPI.addComment(occurrence._id, comment);
+      setOccurrence(updated);
+      setComment('');
+    } catch {} finally { setSending(false); }
+  };
+
+  const handleDelete = () => {
+    Alert.alert('Excluir Ocorrência', 'Tem certeza?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Excluir', style: 'destructive', onPress: async () => {
+        if (!occurrence) return;
+        await occurrenceAPI.delete(occurrence._id);
+        router.back();
+      }},
+    ]);
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#f97316" />
+      </View>
+    );
+  }
+
+  if (!occurrence) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#94a3b8' }}>Ocorrência não encontrada</Text>
+      </View>
+    );
+  }
+
+  const created = occurrence.createdBy || {};
+  const assigned = occurrence.assignedTo || {};
+  const resolvedUser = occurrence.resolvidoPor || {};
+  const transitions = statusTransitions[occurrence.status] || [];
+  const isOverdue = occurrence.dueDate && new Date(occurrence.dueDate) < new Date() && occurrence.status !== 'finalizada';
+
+  return (
+    <>
+      <Stack.Screen options={{ title: occurrence.title?.slice(0, 30) || 'Detalhe', headerStyle: { backgroundColor: '#1e293b' }, headerTintColor: '#f1f5f9' }} />
+      <ScrollView style={{ flex: 1, backgroundColor: '#0f172a' }}>
+        <View style={{ padding: 16, gap: 16 }}>
+          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={{ color: '#f1f5f9', fontSize: 20, fontWeight: '700', marginBottom: 4 }}>{occurrence.title}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <PriorityBadge priority={occurrence.priority} />
+                  <StatusBadge status={occurrence.status} />
+                </View>
+                <Text style={{ color: '#64748b', fontSize: 12 }}>Criado por {created.fullName} · {created.department} · {created.cargo}</Text>
+                <Text style={{ color: '#64748b', fontSize: 12 }}>{new Date(occurrence.createdAt).toLocaleString('pt-BR')}</Text>
+              </View>
+            </View>
+
+            <View style={{ borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 12 }}>
+              <Text style={{ color: '#cbd5e1', fontSize: 14, lineHeight: 22 }}>{occurrence.description}</Text>
+            </View>
+
+            {occurrence.tags?.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                {occurrence.tags.map((tag: string) => (
+                  <View key={tag} style={{ backgroundColor: '#334155', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 }}>
+                    <Text style={{ color: '#cbd5e1', fontSize: 11 }}>#{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1, backgroundColor: '#1e293b', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Responsável</Text>
+              <Text style={{ color: '#f1f5f9', fontSize: 14, fontWeight: '500' }}>{assigned.fullName || 'Não atribuído'}</Text>
+              {assigned.department && <Text style={{ color: '#64748b', fontSize: 12 }}>{assigned.department}</Text>}
+            </View>
+            <View style={{ flex: 1, backgroundColor: '#1e293b', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#64748b', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Prazo</Text>
+              {occurrence.dueDate ? (
+                <Text style={{ color: isOverdue ? '#f87171' : '#f1f5f9', fontSize: 14, fontWeight: '500' }}>
+                  {new Date(occurrence.dueDate).toLocaleDateString('pt-BR')}
+                  {isOverdue && <Text style={{ color: '#f87171', fontSize: 11 }}> Atrasado</Text>}
+                </Text>
+              ) : (
+                <Text style={{ color: '#64748b', fontSize: 14 }}>Sem prazo</Text>
+              )}
+            </View>
+          </View>
+
+          {isNoc && occurrence.status !== 'finalizada' && (
+            <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>
+                {occurrence.status === 'aberta' ? 'Iniciar Execução' : 'Finalizar Ocorrência'}
+              </Text>
+              {occurrence.status === 'aberta' ? (
+                <TouchableOpacity
+                  onPress={() => handleStatusChange('em_execucao')}
+                  style={{ backgroundColor: '#f97316', borderRadius: 12, padding: 14, alignItems: 'center' }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>Iniciar Execução</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <TextInput
+                    value={resolucao}
+                    onChangeText={(t) => { setResolucao(t); setResError(''); }}
+                    placeholder="Descreva a ação corretiva..."
+                    placeholderTextColor="#64748b"
+                    multiline
+                    style={{ backgroundColor: '#0f172a', borderRadius: 12, padding: 14, color: '#f1f5f9', fontSize: 14, borderWidth: 1, borderColor: '#334155', minHeight: 100, textAlignVertical: 'top' }}
+                  />
+                  {resError ? <Text style={{ color: '#f87171', fontSize: 12, marginTop: 4 }}>{resError}</Text> : null}
+                  <TouchableOpacity
+                    onPress={handleResolve}
+                    disabled={resolving || !resolucao.trim()}
+                    style={{ backgroundColor: '#f97316', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 12, opacity: resolving || !resolucao.trim() ? 0.5 : 1 }}
+                  >
+                    <Text style={{ color: '#fff', fontWeight: '600' }}>{resolving ? 'Finalizando...' : 'Finalizar Ocorrência'}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+
+          {occurrence.resolucao && (
+            <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Resolução / Corretivas</Text>
+              <View style={{ backgroundColor: '#022c22', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#065f46' }}>
+                <Text style={{ color: '#d1fae5', fontSize: 14 }}>{occurrence.resolucao}</Text>
+              </View>
+              {resolvedUser.fullName && (
+                <Text style={{ color: '#64748b', fontSize: 12, marginTop: 8 }}>
+                  Resolvido por {resolvedUser.fullName} · {resolvedUser.department}
+                  {occurrence.resolvidoEm ? ` em ${new Date(occurrence.resolvidoEm).toLocaleString('pt-BR')}` : ''}
+                </Text>
+              )}
+            </View>
+          )}
+
+          {isNoc && occurrence.status !== 'finalizada' && transitions.length > 0 && occurrence.status !== 'em_execucao' && (
+            <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 10 }}>Alterar Status</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {transitions.map((s) => (
+                  <TouchableOpacity key={s} onPress={() => handleStatusChange(s)} style={{ backgroundColor: '#334155', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 }}>
+                    <Text style={{ color: '#f1f5f9', fontWeight: '600', fontSize: 13 }}>Mover para {s === 'em_execucao' ? 'Execução' : 'Finalizada'}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity onPress={handleDelete} style={{ borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#7f1d1d' }}>
+                  <Text style={{ color: '#f87171', fontWeight: '600', fontSize: 13 }}>Excluir</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+            <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>Comentários</Text>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              <TextInput
+                value={comment}
+                onChangeText={setComment}
+                placeholder="Adicionar comentário..."
+                placeholderTextColor="#64748b"
+                style={{ flex: 1, backgroundColor: '#0f172a', borderRadius: 12, padding: 12, color: '#f1f5f9', fontSize: 14, borderWidth: 1, borderColor: '#334155' }}
+              />
+              <TouchableOpacity
+                onPress={handleAddComment}
+                disabled={sending || !comment.trim()}
+                style={{ backgroundColor: '#f97316', borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center', opacity: sending || !comment.trim() ? 0.5 : 1 }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>{sending ? '...' : 'Enviar'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {(!occurrence.comments || occurrence.comments.length === 0) ? (
+              <Text style={{ color: '#64748b', textAlign: 'center', paddingVertical: 16 }}>Nenhum comentário ainda</Text>
+            ) : (
+              occurrence.comments.map((c: any, idx: number) => (
+                <View key={c._id || idx} style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                  <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#f9731620', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: '#f97316', fontWeight: '700', fontSize: 13 }}>{(c.author?.fullName || '?').charAt(0)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <Text style={{ color: '#e2e8f0', fontWeight: '600', fontSize: 13 }}>{c.author?.fullName || 'Usuário'}</Text>
+                      <Text style={{ color: '#64748b', fontSize: 11 }}>{new Date(c.createdAt).toLocaleString('pt-BR')}</Text>
+                    </View>
+                    <Text style={{ color: '#cbd5e1', fontSize: 13, marginTop: 2 }}>{c.text}</Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+
+          {occurrence.history?.length > 0 && (
+            <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' }}>
+              <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700', marginBottom: 12 }}>Histórico</Text>
+              {occurrence.history.map((entry: any, idx: number) => (
+                <View key={entry._id || idx} style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+                  <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#f97316', marginTop: 5 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: '#cbd5e1', fontSize: 13 }}>
+                      <Text style={{ fontWeight: '600' }}>{entry.changedBy?.fullName || 'Sistema'}</Text>
+                      {' alterou '}<Text style={{ color: '#f97316' }}>{entry.field}</Text>
+                      {' de '}<Text style={{ color: '#64748b', textDecorationLine: 'line-through' }}>{entry.oldValue}</Text>
+                      {' para '}<Text style={{ color: '#34d399' }}>{entry.newValue}</Text>
+                    </Text>
+                    <Text style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{new Date(entry.changedAt).toLocaleString('pt-BR')}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </>
+  );
+}

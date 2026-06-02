@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User';
 import { generateToken } from '../middleware/auth';
+import type { AuthRequest } from '../middleware/auth';
 import { loginSchema, userSchema } from '@noc/shared';
 
 export const login = async (req: Request, res: Response) => {
@@ -64,9 +65,9 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-export const getMe = async (req: Request, res: Response) => {
+export const getMe = async (req: AuthRequest, res: Response) => {
   try {
-    const user = await User.findById((req as any).userId).select('-password');
+    const user = await User.findById(req.userId).select('-password');
     res.json(user);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

@@ -1,7 +1,25 @@
 import mongoose from 'mongoose';
-import type { Occurrence } from '@noc/shared';
+import type { Occurrence as OccurrenceType } from '@noc/shared';
 
-const occurrenceSchema = new mongoose.Schema<Occurrence>(
+type OccurrenceSchema = Omit<OccurrenceType, 'createdBy' | 'assignedTo' | 'resolvidoPor'> & {
+  createdBy: mongoose.Types.ObjectId;
+  assignedTo?: mongoose.Types.ObjectId;
+  resolvidoPor?: mongoose.Types.ObjectId;
+  comments: Array<{
+    author: mongoose.Types.ObjectId;
+    text: string;
+    createdAt: Date;
+  }>;
+  history: Array<{
+    field: string;
+    oldValue: string;
+    newValue: string;
+    changedBy: mongoose.Types.ObjectId;
+    changedAt: Date;
+  }>;
+};
+
+const occurrenceSchema = new mongoose.Schema<OccurrenceSchema>(
   {
     title: {
       type: String,
@@ -13,7 +31,7 @@ const occurrenceSchema = new mongoose.Schema<Occurrence>(
     },
     status: {
       type: String,
-      enum: ['aberta', 'em_andamento', 'pausada', 'fechada'],
+      enum: ['aberta', 'em_execucao', 'finalizada'],
       default: 'aberta',
     },
     priority: {
@@ -31,6 +49,12 @@ const occurrenceSchema = new mongoose.Schema<Occurrence>(
       type: Number,
       default: 0,
     },
+    resolucao: String,
+    resolvidoPor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    resolvidoEm: Date,
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -78,4 +102,4 @@ const occurrenceSchema = new mongoose.Schema<Occurrence>(
   { timestamps: true }
 );
 
-export const Occurrence = mongoose.model<Occurrence>('Occurrence', occurrenceSchema);
+export const Occurrence = mongoose.model<OccurrenceSchema>('Occurrence', occurrenceSchema);

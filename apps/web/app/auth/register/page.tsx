@@ -13,6 +13,8 @@ export default function RegisterPage() {
     password: '',
     fullName: '',
     department: '',
+    cargo: '',
+    role: 'viewer' as const,
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -101,7 +103,20 @@ export default function RegisterPage() {
               value={form.department}
               onChange={handleChange}
               className="input-field"
-              placeholder="Ex: TI, Redes, Suporte"
+              placeholder="Ex: NOC, Redes, Segurança"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Cargo / Função</label>
+            <input
+              type="text"
+              name="cargo"
+              value={form.cargo}
+              onChange={handleChange}
+              className="input-field"
+              placeholder="Ex: Analista, Coordenador, Técnico"
               required
             />
           </div>
