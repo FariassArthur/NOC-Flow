@@ -92,6 +92,138 @@ export const occurrenceAPI = {
     });
     return data;
   },
+
+  // NOC features
+  startTimer: async (id: string) => {
+    const { data } = await api.post(`/api/occurrences/${id}/timer/start`);
+    return data;
+  },
+  pauseTimer: async (id: string) => {
+    const { data } = await api.post(`/api/occurrences/${id}/timer/pause`);
+    return data;
+  },
+  stopTimer: async (id: string) => {
+    const { data } = await api.post(`/api/occurrences/${id}/timer/stop`);
+    return data;
+  },
+  addRCA: async (id: string, rca: any) => {
+    const { data } = await api.put(`/api/occurrences/${id}/rca`, rca);
+    return data;
+  },
+  addCommLog: async (id: string, log: any) => {
+    const { data } = await api.post(`/api/occurrences/${id}/commlog`, log);
+    return data;
+  },
+};
+
+export const categoryAPI = {
+  list: async () => {
+    const { data } = await api.get('/api/categories');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get(`/api/categories/${id}`);
+    return data;
+  },
+  create: async (payload: any) => {
+    const { data } = await api.post('/api/categories', payload);
+    return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/categories/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/categories/${id}`);
+  },
+};
+
+export const equipmentAPI = {
+  list: async () => {
+    const { data } = await api.get('/api/equipment');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get(`/api/equipment/${id}`);
+    return data;
+  },
+  create: async (payload: any) => {
+    const { data } = await api.post('/api/equipment', payload);
+    return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/equipment/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/equipment/${id}`);
+  },
+};
+
+export const serviceAPI = {
+  list: async () => {
+    const { data } = await api.get('/api/services');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get(`/api/services/${id}`);
+    return data;
+  },
+  create: async (payload: any) => {
+    const { data } = await api.post('/api/services', payload);
+    return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/services/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/services/${id}`);
+  },
+};
+
+export const escalationAPI = {
+  list: async () => {
+    const { data } = await api.get('/api/escalations');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get(`/api/escalations/${id}`);
+    return data;
+  },
+  create: async (payload: any) => {
+    const { data } = await api.post('/api/escalations', payload);
+    return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/escalations/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/escalations/${id}`);
+  },
+};
+
+export const runbookAPI = {
+  list: async () => {
+    const { data } = await api.get('/api/runbooks');
+    return data;
+  },
+  get: async (id: string) => {
+    const { data } = await api.get(`/api/runbooks/${id}`);
+    return data;
+  },
+  create: async (payload: any) => {
+    const { data } = await api.post('/api/runbooks', payload);
+    return data;
+  },
+  update: async (id: string, payload: any) => {
+    const { data } = await api.put(`/api/runbooks/${id}`, payload);
+    return data;
+  },
+  delete: async (id: string) => {
+    await api.delete(`/api/runbooks/${id}`);
+  },
 };
 
 export const userAPI = {

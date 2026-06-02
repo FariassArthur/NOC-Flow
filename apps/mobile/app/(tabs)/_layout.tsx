@@ -97,6 +97,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="runbooks"
+        options={{
+          title: 'Runbooks',
+          tabBarIcon: ({ color }) => (
+            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color, fontSize: 13, fontWeight: 'bold' }}>B</Text>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
@@ -111,7 +122,7 @@ export default function TabsLayout() {
         name="admin"
         options={{
           title: 'Admin',
-          href: isAdmin === true ? '/admin' : null,
+          href: isAdmin === true ? '/admin/users' : null,
           tabBarIcon: ({ color }) => (
             <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
               <Text style={{ color, fontSize: 14, fontWeight: 'bold' }}>A</Text>
