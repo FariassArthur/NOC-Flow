@@ -31,3 +31,9 @@ export const calculateDaysUntilDue = (dueDate: Date | string): number => {
   const today = new Date().setHours(0, 0, 0, 0);
   return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
 };
+
+export const statusCount = <T extends { status: string }>(list: T[], status: string): number =>
+  list.filter((o) => o.status === status).length;
+
+export const priorityCount = <T extends { priority: string }>(list: T[], priority: string): number =>
+  list.filter((o) => o.priority === priority).length;

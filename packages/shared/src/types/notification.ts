@@ -1,9 +1,7 @@
-import { ObjectId } from 'mongodb';
-
-export type NotificationType = 'new_occurrence' | 'status_change' | 'assignment' | 'comment';
+export type NotificationType = 'new_occurrence' | 'status_change' | 'assignment' | 'comment' | 'escalation';
 
 export interface Notification {
-  _id?: ObjectId | string;
+  _id?: string;
   recipient: string;
   type: NotificationType;
   title: string;

@@ -1,16 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Share, Alert } from 'react-native';
 import { occurrenceAPI, authAPI } from '../../lib/api';
+import { statusCount, priorityCount } from '@noc/shared';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
-
-const statusCount = (list: any[], status: string) => list.filter((o: any) => o.status === status).length;
-const priorityCount = (list: any[], priority: string) => list.filter((o: any) => o.priority === priority).length;
 
 export default function ReportsScreen() {
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState('');
   const [user, setUser] = useState<any>(null);
 
   const fetchData = useCallback(async () => {
@@ -21,7 +20,8 @@ export default function ReportsScreen() {
       ]);
       setOccurrences(occRes.data || occRes || []);
       setUser(me);
-    } catch {}
+      setFetchError('');
+    } catch { setFetchError('Erro ao carregar relatórios'); }
   }, []);
 
   useEffect(() => { fetchData().finally(() => setLoading(false)); }, []);
@@ -65,6 +65,17 @@ export default function ReportsScreen() {
   };
 
   const cardStyle = { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' };
+
+  if (fetchError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+        <Text style={{ color: '#f87171', fontSize: 15, marginBottom: 12 }}>{fetchError}</Text>
+        <TouchableOpacity onPress={() => { setLoading(true); fetchData().finally(() => setLoading(false)); }} style={{ backgroundColor: '#f97316', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Tentar Novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (loading) {
     return (

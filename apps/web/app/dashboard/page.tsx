@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { occurrenceAPI } from '@noc/api-client';
+import { occurrenceAPI, reportAPI } from '@noc/api-client';
 import type { Occurrence } from '@noc/shared';
-import { StatusPieChart, PriorityBarChart, TimelineChart } from '../../components/DashboardCharts';
+import { STATUS_OPTIONS } from '@noc/shared';
+import { StatusPieChart, PriorityBarChart, TimelineChart, SLAMetrics } from '../../components/DashboardCharts';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   aberta: { label: 'Abertas', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
@@ -16,11 +17,14 @@ export default function DashboardPage() {
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [slaSummary, setSlaSummary] = useState<any>(null);
 
   useEffect(() => {
     occurrenceAPI.list({ limit: 1000 }).then((res: any) => {
       setOccurrences(res.data || res);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(() => {}).finally(() => setLoading(false));
+
+    reportAPI.summary().then(setSlaSummary).catch(() => {});
   }, []);
 
   const filtered = occurrences.filter((o) => {
@@ -114,6 +118,25 @@ export default function DashboardPage() {
         <PriorityBarChart data={filtered} />
         <TimelineChart data={filtered} />
       </div>
+
+      {slaSummary && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SLAMetrics data={slaSummary} />
+          <div className="card-glow">
+            <h3 className="text-sm font-semibold text-white mb-4 relative z-10">Tempo Médio de Resolução</h3>
+            <div className="relative z-10 flex items-center justify-center py-6">
+              <div className="text-center">
+                <p className="text-5xl font-bold text-accent-400">
+                  {slaSummary.avgResolutionTimeMinutes > 60
+                    ? `${(slaSummary.avgResolutionTimeMinutes / 60).toFixed(1)}h`
+                    : `${slaSummary.avgResolutionTimeMinutes} min`}
+                </p>
+                <p className="text-sm text-slate-400 mt-2">tempo médio para resolução</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card-glow">

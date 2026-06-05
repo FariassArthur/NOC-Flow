@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 class APIClient {
   private client: AxiosInstance;
 
-  constructor(baseURL: string = 'http://localhost:3001') {
+  constructor(baseURL: string = '') {
     this.client = axios.create({
       baseURL,
       headers: {
@@ -27,7 +27,9 @@ class APIClient {
         if (error.response?.status === 401) {
           this.clearToken();
           // Trigger logout event
-          window.dispatchEvent?.(new Event('unauthorized'));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('unauthorized'));
+          }
         }
         return Promise.reject(error);
       }
@@ -69,6 +71,8 @@ class APIClient {
   }
 }
 
-export const apiClient = new APIClient(
-  process.env.NEXT_PUBLIC_API_URL || ''
-);
+const apiUrl =
+  (typeof process !== 'undefined' && process.env && (process.env.NEXT_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL)) ||
+  undefined;
+
+export const apiClient = new APIClient(apiUrl);

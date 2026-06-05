@@ -8,7 +8,8 @@ export const listUsers = async (req: AuthRequest, res: Response) => {
     const users = await User.find().select('-password').sort({ fullName: 1 });
     res.json(users);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[listUsers]', error.message);
+    res.status(400).json({ error: 'Erro ao listar usuários' });
   }
 };
 
@@ -18,7 +19,8 @@ export const getUser = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[getUser]', error.message);
+    res.status(400).json({ error: 'Erro ao buscar usuário' });
   }
 };
 
@@ -32,7 +34,8 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updateUser]', error.message);
+    res.status(400).json({ error: 'Erro ao atualizar usuário' });
   }
 };
 
@@ -42,7 +45,8 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json({ message: 'Usuário removido' });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[deleteUser]', error.message);
+    res.status(400).json({ error: 'Erro ao remover usuário' });
   }
 };
 
@@ -58,7 +62,8 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     res.json(user);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updateProfile]', error.message);
+    res.status(400).json({ error: 'Erro ao atualizar perfil' });
   }
 };
 
@@ -80,6 +85,7 @@ export const updatePassword = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Senha alterada com sucesso' });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updatePassword]', error.message);
+    res.status(400).json({ error: 'Erro ao alterar senha' });
   }
 };

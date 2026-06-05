@@ -16,9 +16,16 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [fetchError, setFetchError] = useState('');
+
   const fetch = useCallback(async () => {
-    const data = await notificationAPI.list();
-    setNotifications(data);
+    try {
+      const data = await notificationAPI.list();
+      setNotifications(data);
+      setFetchError('');
+    } catch {
+      setFetchError('Erro ao carregar notificações');
+    }
   }, []);
 
   useEffect(() => { fetch().finally(() => setLoading(false)); }, []);
@@ -51,6 +58,13 @@ export default function NotificationsScreen() {
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" color="#f97316" />
           </View>
+        ) : fetchError ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+            <Text style={{ color: '#f87171', fontSize: 15, marginBottom: 12 }}>{fetchError}</Text>
+            <TouchableOpacity onPress={() => { setLoading(true); fetch().finally(() => setLoading(false)); }} style={{ backgroundColor: '#f97316', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>Tentar Novamente</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1e293b' }}>
@@ -78,7 +92,7 @@ export default function NotificationsScreen() {
                           if (n.relatedOccurrence) router.push(`/occurrences/${n.relatedOccurrence}`);
                         }}
                         style={{
-                          backgroundColor: n.read ? '#1e293b' : '#1e293b',
+                          backgroundColor: n.read ? '#0f172a' : '#1e293b',
                           borderRadius: 16, padding: 14, borderWidth: 1,
                           borderColor: n.read ? '#1e293b' : '#334155',
                           opacity: n.read ? 0.7 : 1,

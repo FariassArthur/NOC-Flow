@@ -1,7 +1,5 @@
-import { ObjectId } from 'mongodb';
-
 export interface User {
-  _id?: ObjectId | string;
+  _id?: string;
   username: string;
   email: string;
   password: string;
@@ -16,7 +14,7 @@ export interface User {
 
 export interface AuthToken {
   token: string;
-  expiresIn: string;
+  expiresIn: string | number;
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;

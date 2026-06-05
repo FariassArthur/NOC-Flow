@@ -33,4 +33,4 @@ const EquipmentSchema = new Schema<IEquipment>(
   { timestamps: true }
 );
 
-export default mongoose.model<IEquipment>('Equipment', EquipmentSchema);
+export const Equipment = mongoose.model<IEquipment>('Equipment', EquipmentSchema);

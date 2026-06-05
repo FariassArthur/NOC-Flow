@@ -24,4 +24,4 @@ const RunbookSchema = new Schema<IRunbook>(
   { timestamps: true }
 );
 
-export default mongoose.model<IRunbook>('Runbook', RunbookSchema);
+export const Runbook = mongoose.model<IRunbook>('Runbook', RunbookSchema);

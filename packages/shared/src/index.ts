@@ -5,6 +5,7 @@ export * from './types';
 export * from './schemas/userSchema';
 export * from './schemas/occurrenceSchema';
 export * from './schemas/notificationSchema';
+export * from './schemas/auditSchema';
 
 
 // Constants

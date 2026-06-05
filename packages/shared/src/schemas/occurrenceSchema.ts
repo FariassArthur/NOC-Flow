@@ -48,7 +48,7 @@ export const equipmentSchema = z.object({
   type: z.enum(['roteador', 'switch', 'firewall', 'link', 'servidor', 'outro']),
   ip: z.string().optional(),
   brand: z.string().optional(),
-  model: z.string().optional(),
+  equipmentModel: z.string().optional(),
   location: z.string().optional(),
   department: z.string().optional(),
   status: z.enum(['ativo', 'inativo', 'manutencao']).default('ativo'),
@@ -89,3 +89,12 @@ export const updateOccurrenceSchema = occurrenceSchema.partial();
 
 export type OccurrenceInput = z.infer<typeof occurrenceSchema>;
 export type UpdateOccurrenceInput = z.infer<typeof updateOccurrenceSchema>;
+export type ResolucaoInput = z.infer<typeof resolucaoSchema>;
+export type RCAInput = z.infer<typeof rcaSchema>;
+export type CommentInput = z.infer<typeof commentSchema>;
+export type CommLogEntryInput = z.infer<typeof commLogSchema>;
+export type CategoryInput = z.infer<typeof categorySchema>;
+export type EquipmentInput = z.infer<typeof equipmentSchema>;
+export type ServiceInput = z.infer<typeof serviceSchema>;
+export type RunbookInput = z.infer<typeof runbookSchema>;
+export type EscalationRuleInput = z.infer<typeof escalationRuleSchema>;

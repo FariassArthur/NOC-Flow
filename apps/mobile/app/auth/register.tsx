@@ -9,7 +9,15 @@ export default function RegisterScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const set = (key: string) => (val: string) => setForm((p) => ({ ...p, [key]: val }));
+  const set = (key: string) => (val: string) => {
+    // Prevenir entrada de NOC no campo de departamento
+    if (key === 'department' && val.toUpperCase() === 'NOC') {
+      setError('O setor NOC só pode ser criado por um administrador');
+      return;
+    }
+    setError('');
+    setForm((p) => ({ ...p, [key]: val }));
+  };
 
   const handleRegister = async () => {
     const { fullName, username, email, department, cargo, password } = form;
@@ -17,6 +25,13 @@ export default function RegisterScreen() {
       setError('Preencha todos os campos');
       return;
     }
+    
+    // Validação adicional no frontend
+    if (department.toUpperCase() === 'NOC') {
+      setError('O setor NOC só pode ser criado por um administrador');
+      return;
+    }
+    
     setError('');
     setLoading(true);
     try {
@@ -47,11 +62,16 @@ export default function RegisterScreen() {
           </View>
         ) : null}
 
+        <View style={{ backgroundColor: '#1e3a8a', borderRadius: 12, padding: 12, marginBottom: 16 }}>
+          <Text style={{ color: '#60a5fa', fontSize: 13, fontWeight: '600', marginBottom: 4 }}>ℹ️ Informação importante</Text>
+          <Text style={{ color: '#93c5fd', fontSize: 12 }}>O setor NOC é reservado para administradores. Se você é um membro NOC, entre em contato com um administrador.</Text>
+        </View>
+
         {[
           { key: 'fullName', label: 'Nome completo', placeholder: 'Seu nome' },
           { key: 'username', label: 'Usuário', placeholder: 'nome.usuario' },
           { key: 'email', label: 'Email', placeholder: 'seu@email.com', keyboard: 'email-address' },
-          { key: 'department', label: 'Departamento', placeholder: 'Ex: NOC, Suporte' },
+          { key: 'department', label: 'Departamento/Setor', placeholder: 'Ex: Redes, Segurança, Suporte' },
           { key: 'cargo', label: 'Cargo / Função', placeholder: 'Ex: Analista, Técnico' },
         ].map(({ key, label, placeholder, keyboard }) => (
           <View key={key} style={{ marginBottom: 14 }}>
@@ -73,7 +93,7 @@ export default function RegisterScreen() {
           <TextInput
             value={form.password}
             onChangeText={set('password')}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres (maiúscula, minúscula, número)"
             placeholderTextColor="#64748b"
             style={inputStyle}
             secureTextEntry

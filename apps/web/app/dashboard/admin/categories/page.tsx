@@ -10,6 +10,7 @@ export default function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', description: '', slaResponseMinutes: '', slaResolutionMinutes: '', color: '#6366f1' });
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const load = () => categoryAPI.list().then(setItems).catch(() => {}).finally(() => setLoading(false));
 
@@ -18,6 +19,7 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSaving(true);
     try {
       const data = {
         name: form.name,
@@ -36,6 +38,8 @@ export default function CategoriesPage() {
       load();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao salvar');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -88,7 +92,7 @@ export default function CategoriesPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button type="submit" className="btn-primary">{editing ? 'Atualizar' : 'Criar'}</button>
+          <button type="submit" disabled={saving} className="btn-primary">{saving ? 'Salvando...' : editing ? 'Atualizar' : 'Criar'}</button>
           {editing && <button type="button" onClick={() => { setEditing(null); setForm({ name: '', description: '', slaResponseMinutes: '', slaResolutionMinutes: '', color: '#6366f1' }); }} className="btn-secondary">Cancelar</button>}
         </div>
       </form>

@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import Service from '../models/Service';
+import { Service } from '../models/Service';
 import type { AuthRequest } from '../middleware/auth';
 
 export const listServices = async (req: AuthRequest, res: Response) => {
@@ -17,7 +17,8 @@ export const listServices = async (req: AuthRequest, res: Response) => {
     const items = await Service.find(filter).sort({ name: 1 });
     res.json(items);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[listServices]', error.message);
+    res.status(400).json({ error: 'Erro ao listar serviços' });
   }
 };
 
@@ -27,7 +28,8 @@ export const getService = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Serviço não encontrado' });
     res.json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[getService]', error.message);
+    res.status(400).json({ error: 'Erro ao buscar serviço' });
   }
 };
 
@@ -36,7 +38,8 @@ export const createService = async (req: AuthRequest, res: Response) => {
     const item = await Service.create(req.body);
     res.status(201).json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[createService]', error.message);
+    res.status(400).json({ error: 'Erro ao criar serviço' });
   }
 };
 
@@ -48,7 +51,8 @@ export const updateService = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Serviço não encontrado' });
     res.json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updateService]', error.message);
+    res.status(400).json({ error: 'Erro ao atualizar serviço' });
   }
 };
 
@@ -58,6 +62,7 @@ export const deleteService = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Serviço não encontrado' });
     res.json({ message: 'Serviço removido' });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[deleteService]', error.message);
+    res.status(400).json({ error: 'Erro ao remover serviço' });
   }
 };

@@ -1,25 +1,24 @@
-import { ObjectId } from 'mongodb';
 import type { TimeTracking, RCA, CommLogEntry } from './noc';
 
 export type OccurrenceStatus = 'aberta' | 'em_execucao' | 'finalizada';
 export type Priority = 'baixa' | 'média' | 'alta' | 'crítica';
 
 export interface Comment {
-  _id?: ObjectId | string;
+  _id?: string;
   author: string;
   text: string;
   createdAt: Date;
 }
 
 export interface Attachment {
-  _id?: ObjectId | string;
+  _id?: string;
   fileName: string;
   fileUrl: string;
   uploadedAt: Date;
 }
 
 export interface HistoryEntry {
-  _id?: ObjectId | string;
+  _id?: string;
   field: string;
   oldValue: string;
   newValue: string;
@@ -28,7 +27,7 @@ export interface HistoryEntry {
 }
 
 export interface Occurrence {
-  _id?: ObjectId | string;
+  _id?: string;
 
   title: string;
   description: string;

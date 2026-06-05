@@ -162,3 +162,61 @@ export function TimelineChart({ data }: { data: Occurrence[] }) {
     </div>
   );
 }
+
+export function SLAMetrics({ data }: { data: { slaStats: { dentro: number; atrasado: number; violado: number; semSLA: number }; totalOccurrences: number } }) {
+  const { slaStats, totalOccurrences } = data;
+  const totalSLA = slaStats.dentro + slaStats.atrasado + slaStats.violado;
+
+  const slaData = [
+    { name: 'Dentro do SLA', value: slaStats.dentro, color: '#10b981', percentage: totalSLA > 0 ? Math.round((slaStats.dentro / totalSLA) * 100) : 0 },
+    { name: 'Atrasado', value: slaStats.atrasado, color: '#f59e0b', percentage: totalSLA > 0 ? Math.round((slaStats.atrasado / totalSLA) * 100) : 0 },
+    { name: 'Violado', value: slaStats.violado, color: '#ef4444', percentage: totalSLA > 0 ? Math.round((slaStats.violado / totalSLA) * 100) : 0 },
+  ].filter((d) => d.value > 0);
+
+  if (slaData.length === 0) return null;
+
+  return (
+    <div className="card-glow">
+      <h3 className="text-sm font-semibold text-white mb-4 relative z-10">SLA</h3>
+      <div className="relative z-10">
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={slaData}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={85}
+              paddingAngle={3}
+              dataKey="value"
+            >
+              {slaData.map((entry, index) => (
+                <Cell key={index} fill={entry.color} stroke={entry.color} strokeOpacity={0.5} />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={{
+                background: '#1e293b',
+                border: '1px solid rgba(249,115,22,0.2)',
+                borderRadius: '12px',
+                color: '#f1f5f9',
+                fontSize: '13px',
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="flex flex-wrap gap-3 justify-center mt-2 relative z-10">
+        {slaData.map((item) => (
+          <div key={item.name} className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+            {item.name}: <span className="text-slate-200 font-medium">{item.percentage}%</span>
+          </div>
+        ))}
+        {slaStats.semSLA > 0 && (
+          <div className="text-xs text-slate-500">({slaStats.semSLA} sem SLA)</div>
+        )}
+      </div>
+    </div>
+  );
+}

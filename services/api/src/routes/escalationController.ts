@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import EscalationRule from '../models/EscalationRule';
+import { EscalationRule } from '../models/EscalationRule';
 import type { AuthRequest } from '../middleware/auth';
 
 export const listEscalationRules = async (req: AuthRequest, res: Response) => {
@@ -7,7 +7,8 @@ export const listEscalationRules = async (req: AuthRequest, res: Response) => {
     const items = await EscalationRule.find().sort({ priority: 1, triggerMinutes: 1 });
     res.json(items);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[listEscalationRules]', error.message);
+    res.status(400).json({ error: 'Erro ao listar regras de escalonamento' });
   }
 };
 
@@ -17,7 +18,8 @@ export const getEscalationRule = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Regra de escalonamento não encontrada' });
     res.json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[getEscalationRule]', error.message);
+    res.status(400).json({ error: 'Erro ao buscar regra de escalonamento' });
   }
 };
 
@@ -26,7 +28,8 @@ export const createEscalationRule = async (req: AuthRequest, res: Response) => {
     const item = await EscalationRule.create(req.body);
     res.status(201).json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[createEscalationRule]', error.message);
+    res.status(400).json({ error: 'Erro ao criar regra de escalonamento' });
   }
 };
 
@@ -38,7 +41,8 @@ export const updateEscalationRule = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Regra não encontrada' });
     res.json(item);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updateEscalationRule]', error.message);
+    res.status(400).json({ error: 'Erro ao atualizar regra de escalonamento' });
   }
 };
 
@@ -48,6 +52,7 @@ export const deleteEscalationRule = async (req: AuthRequest, res: Response) => {
     if (!item) return res.status(404).json({ error: 'Regra não encontrada' });
     res.json({ message: 'Regra removida' });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[deleteEscalationRule]', error.message);
+    res.status(400).json({ error: 'Erro ao remover regra de escalonamento' });
   }
 };

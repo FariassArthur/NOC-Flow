@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import type { User } from '@noc/shared';
 
 export interface AuthRequest extends Request {
   userId?: string;
-  user?: any;
+  user?: User;
 }
 
 const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    console.error('JWT_SECRET environment variable is not set');
-    process.exit(1);
+    throw new Error('JWT_SECRET environment variable is not set');
   }
   return secret;
 };
@@ -27,7 +27,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
     req.userId = (decoded as any).userId;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Token inválido' });
+    return res.status(401).json({ error: 'Token inválido' });
   }
 };
 

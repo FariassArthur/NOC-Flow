@@ -15,8 +15,8 @@ export const authAPI = {
     return response.data;
   },
 
-  logout: () => {
-    apiClient.instance.post('/api/auth/logout');
+  logout: async () => {
+    await apiClient.instance.post('/api/auth/logout');
   },
 
   me: async () => {
@@ -275,6 +275,83 @@ export const notificationAPI = {
 
   markAllAsRead: async () => {
     const response = await apiClient.instance.put<{ message: string }>('/api/notifications/read-all');
+    return response.data;
+  },
+};
+
+// NOC: Runbook Execution Endpoints
+export const runbookExecutionAPI = {
+  list: async (params?: { status?: string; runbookId?: string; occurrenceId?: string; page?: number; limit?: number }) => {
+    const response = await apiClient.instance.get<{ data: import('@noc/shared').RunbookExecution[]; total: number; page: number; totalPages: number }>('/api/runbook-executions', { params });
+    return response.data;
+  },
+
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<import('@noc/shared').RunbookExecution>(`/api/runbook-executions/${id}`);
+    return response.data;
+  },
+
+  start: async (runbookId: string, occurrenceId?: string) => {
+    const response = await apiClient.instance.post<import('@noc/shared').RunbookExecution>('/api/runbook-executions', { runbookId, occurrenceId });
+    return response.data;
+  },
+
+  completeStep: async (id: string, notes?: string, action: 'complete' | 'skip' = 'complete') => {
+    const response = await apiClient.instance.put<import('@noc/shared').RunbookExecution>(`/api/runbook-executions/${id}/step`, { notes, action });
+    return response.data;
+  },
+
+  cancel: async (id: string) => {
+    const response = await apiClient.instance.put<import('@noc/shared').RunbookExecution>(`/api/runbook-executions/${id}/cancel`);
+    return response.data;
+  },
+};
+
+// Audit Endpoints
+export const auditAPI = {
+  list: async (params?: { action?: string; userId?: string; targetId?: string; page?: number; limit?: number }) => {
+    const response = await apiClient.instance.get<{ data: import('@noc/shared').AuditLog[]; total: number; page: number; totalPages: number }>('/api/audit', { params });
+    return response.data;
+  },
+
+  get: async (id: string) => {
+    const response = await apiClient.instance.get<import('@noc/shared').AuditLog>(`/api/audit/${id}`);
+    return response.data;
+  },
+
+  stats: async () => {
+    const response = await apiClient.instance.get<{ totalLogs: number; actions: { _id: string; count: number }[]; recentLogins: any[] }>('/api/audit/stats');
+    return response.data;
+  },
+};
+
+// Report Endpoints
+export const reportAPI = {
+  csv: async (params?: { status?: string; priority?: string; from?: string; to?: string; assignedTo?: string }) => {
+    const response = await apiClient.instance.get('/api/reports/csv', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  pdf: async (params?: { from?: string; to?: string }) => {
+    const response = await apiClient.instance.get('/api/reports/pdf', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  summary: async (params?: { from?: string; to?: string }) => {
+    const response = await apiClient.instance.get<{
+      totalOccurrences: number;
+      statusCounts: Record<string, number>;
+      priorityCounts: Record<string, number>;
+      topCreators: { userId: string; count: number; user: any }[];
+      avgResolutionTimeMinutes: number;
+      slaStats: { dentro: number; atrasado: number; violado: number; semSLA: number };
+    }>('/api/reports/summary', { params });
     return response.data;
   },
 };

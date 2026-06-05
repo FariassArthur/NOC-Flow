@@ -10,7 +10,7 @@ const notificationSchema = new mongoose.Schema<NotificationType>(
     },
     type: {
       type: String,
-      enum: ['new_occurrence', 'status_change', 'assignment', 'comment'],
+      enum: ['new_occurrence', 'status_change', 'assignment', 'comment', 'escalation'],
       required: true,
     },
     title: {
@@ -32,5 +32,19 @@ const notificationSchema = new mongoose.Schema<NotificationType>(
   },
   { timestamps: true }
 );
+
+notificationSchema.post('save', function (doc) {
+  import('../services/socketManager').then(({ emitToUser }) => {
+    emitToUser(doc.recipient, 'notification', doc.toObject());
+  }).catch(() => {});
+});
+
+notificationSchema.post('insertMany', function (docs: any[]) {
+  import('../services/socketManager').then(({ emitToUser }) => {
+    for (const doc of docs) {
+      emitToUser(doc.recipient, 'notification', doc.toObject());
+    }
+  }).catch(() => {});
+});
 
 export const Notification = mongoose.model<NotificationType>('Notification', notificationSchema);

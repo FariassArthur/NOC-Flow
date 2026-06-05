@@ -51,7 +51,8 @@ router.post('/', upload.single('file'), (req: Request, res: Response) => {
       size: req.file.size,
     });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[upload]', error.message);
+    res.status(400).json({ error: 'Erro ao fazer upload' });
   }
 });
 

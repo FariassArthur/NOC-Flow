@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { occurrenceAPI } from '@noc/api-client';
+import { statusCount, priorityCount } from '@noc/shared';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const statusColors: Record<string, string> = {
@@ -17,18 +18,18 @@ const priorityColors: Record<string, string> = {
   baixa: '#60a5fa',
 };
 
-const statusCount = (list: any[], status: string) => list.filter((o: any) => o.status === status).length;
-const priorityCount = (list: any[], priority: string) => list.filter((o: any) => o.priority === priority).length;
-
 export default function ReportsPage() {
   const [occurrences, setOccurrences] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [fetchError, setFetchError] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
       const res = await occurrenceAPI.list() as any;
       setOccurrences(res.data || res || []);
-    } catch {} finally { setLoading(false); }
+      setFetchError('');
+    } catch { setFetchError('Erro ao carregar dados'); } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -88,6 +89,13 @@ export default function ReportsPage() {
     const a = document.createElement('a'); a.href = url; a.download = `relatorio-ocorrencias-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
+
+  if (fetchError) {
+    return <div className="text-center py-12">
+      <p className="text-red-400 mb-4">{fetchError}</p>
+      <button onClick={() => { setLoading(true); fetchData(); }} className="btn-primary">Tentar Novamente</button>
+    </div>;
+  }
 
   if (loading) {
     return <div className="text-center py-12 text-slate-500">Carregando...</div>;

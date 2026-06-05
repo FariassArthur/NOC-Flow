@@ -20,12 +20,28 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Prevenir entrada de NOC no campo de departamento
+    if (name === 'department' && value.toUpperCase() === 'NOC') {
+      setError('O setor NOC só pode ser criado por um administrador');
+      return;
+    }
+    
+    setError('');
+    setForm({ ...form, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Validação adicional no frontend
+    if (form.department.toUpperCase() === 'NOC') {
+      setError('O setor NOC só pode ser criado por um administrador');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -54,6 +70,11 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
+
+          <div className="bg-blue-500/10 border border-blue-500/30 text-blue-300 px-4 py-3 rounded-lg text-sm">
+            <p className="font-semibold mb-1">ℹ️ Informação importante</p>
+            <p>O setor NOC é reservado para administradores. Se você é um membro NOC, entre em contato com um administrador.</p>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Nome completo</label>
@@ -96,16 +117,20 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Departamento</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Departamento/Setor
+              <span className="text-red-400 ml-1">*</span>
+            </label>
             <input
               type="text"
               name="department"
               value={form.department}
               onChange={handleChange}
               className="input-field"
-              placeholder="Ex: NOC, Redes, Segurança"
+              placeholder="Ex: Redes, Segurança, Suporte"
               required
             />
+            <p className="text-xs text-slate-400 mt-1">Exemplos: Redes, Segurança, Suporte, Infraestrutura</p>
           </div>
 
           <div>
@@ -129,10 +154,11 @@ export default function RegisterPage() {
               value={form.password}
               onChange={handleChange}
               className="input-field"
-              placeholder="Mínimo 6 caracteres"
-              minLength={6}
+              placeholder="Mínimo 8 caracteres (maiúscula, minúscula, número)"
+              minLength={8}
               required
             />
+            <p className="text-xs text-slate-400 mt-1">Deve conter maiúscula, minúscula e número</p>
           </div>
 
           <button

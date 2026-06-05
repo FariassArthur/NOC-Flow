@@ -13,6 +13,7 @@ export default function ServicesPage() {
   const [editing, setEditing] = useState<Service | null>(null);
   const [form, setForm] = useState({ name: '', type: 'internet' as string, provider: '', contract: '', bandwidth: '', status: 'ativo' as string });
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const load = () => serviceAPI.list().then(setItems).catch(() => {}).finally(() => setLoading(false));
 
@@ -21,6 +22,7 @@ export default function ServicesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSaving(true);
     try {
       const data = {
         name: form.name,
@@ -40,6 +42,8 @@ export default function ServicesPage() {
       load();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao salvar');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -101,7 +105,7 @@ export default function ServicesPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <button type="submit" className="btn-primary">{editing ? 'Atualizar' : 'Criar'}</button>
+          <button type="submit" disabled={saving} className="btn-primary">{saving ? 'Salvando...' : editing ? 'Atualizar' : 'Criar'}</button>
           {editing && <button type="button" onClick={() => { setEditing(null); setForm({ name: '', type: 'internet', provider: '', contract: '', bandwidth: '', status: 'ativo' }); }} className="btn-secondary">Cancelar</button>}
         </div>
       </form>

@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import Svg, { Path, G, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, G } from 'react-native-svg';
 
 interface Slice {
   label: string;
@@ -33,53 +33,6 @@ export default function PieChart({ data, size = 160, innerRadius = 40 }: Props) 
     y: cy - r * Math.cos(angle),
   });
 
-  let currentAngle = -Math.PI / 2;
-  const paths: { d: string; fill: string; percent: number; label: string }[] = [];
-
-  for (const slice of data) {
-    if (slice.value === 0) continue;
-    const sliceAngle = (slice.value / total) * 2 * Math.PI;
-    const start = currentAngle;
-    const end = currentAngle + sliceAngle;
-    const largeArc = sliceAngle > Math.PI ? 1 : 0;
-
-    const p1 = polarToCart(start, outerR);
-    const p2 = polarToCart(end, outerR);
-    const p3 = polarToCart(end, innerR);
-    const p4 = polarToCart(start, innerR);
-
-    const d = [
-      `M ${p1.x} ${p1.y}`,
-      `A ${outerR} ${outerR} 0 ${largeArc} 1 ${p2.x} ${p2.y}`,
-      `L ${p3.x} ${p3.y}`,
-      `A ${innerR} ${innerR} 0 ${largeArc} 0 ${p4.x} ${p4.y}`,
-      'Z',
-    ].join(' ');
-
-    const midAngle = start + sliceAngle / 2;
-    const labelR = outerR + 16;
-    const lp = polarToCart(midAngle, labelR);
-
-    paths.push({ d, fill: slice.color, percent: slice.value / total, label: slice.label });
-    paths.push({ d: '', fill: '', percent: 0, label: '' });
-
-    paths.push({
-      d,
-      fill: slice.color,
-      percent: slice.value / total,
-      label: '',
-    });
-
-    currentAngle = end;
-  }
-
-  const deduped: typeof paths = [];
-  for (let i = 0; i < paths.length; i++) {
-    if (paths[i].d && (!deduped.length || deduped[deduped.length - 1].fill !== paths[i].fill)) {
-      deduped.push(paths[i]);
-    }
-  }
-
   return (
     <View style={{ alignItems: 'center' }}>
       <Svg width={size + 40} height={size + 40} viewBox={`0 0 ${size + 40} ${size + 40}`}>
@@ -101,8 +54,6 @@ export default function PieChart({ data, size = 160, innerRadius = 40 }: Props) 
               `A ${innerR} ${innerR} 0 ${large} 0 ${p4.x} ${p4.y}`,
               'Z',
             ].join(' ');
-            const midA = startA + sliceAngle / 2;
-            const lp = polarToCart(midA, outerR + 20);
             return (
               <G key={slice.label}>
                 <Path d={d} fill={slice.color} opacity={0.9} />

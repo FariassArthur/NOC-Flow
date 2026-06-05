@@ -15,7 +15,7 @@ export interface Equipment {
   type: 'roteador' | 'switch' | 'firewall' | 'link' | 'servidor' | 'outro';
   ip?: string;
   brand?: string;
-  model?: string;
+  equipmentModel?: string;
   location?: string;
   department?: string;
   status: 'ativo' | 'inativo' | 'manutencao';

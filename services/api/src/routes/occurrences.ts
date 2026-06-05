@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
+import { authorizeNoc } from '../middleware/authorize';
 import { validateBody } from '../middleware/validation';
+import { z } from 'zod';
 import { occurrenceSchema, updateOccurrenceSchema, resolucaoSchema, commentSchema, rcaSchema, commLogSchema } from '@noc/shared';
 import {
   listOccurrences,
@@ -26,12 +28,15 @@ router.use(authMiddleware);
 router.get('/', listOccurrences);
 router.post('/', validateBody(occurrenceSchema), createOccurrence);
 router.get('/:id', getOccurrence);
+router.post('/:id/comments', validateBody(commentSchema), addComment);
+router.post('/:id/attachments', validateBody(z.object({ fileName: z.string().min(1), fileUrl: z.string().min(1) })), addAttachment);
+
+router.use(authorizeNoc);
+
 router.put('/:id', validateBody(updateOccurrenceSchema), updateOccurrence);
 router.put('/:id/resolver', validateBody(resolucaoSchema), resolveOccurrence);
-router.put('/:id/assign', assignOccurrence);
-router.post('/:id/attachments', addAttachment);
+router.put('/:id/assign', validateBody(z.object({ assignedTo: z.string().optional() })), assignOccurrence);
 router.delete('/:id', deleteOccurrence);
-router.post('/:id/comments', validateBody(commentSchema), addComment);
 router.post('/:id/timer/start', startTimer);
 router.post('/:id/timer/pause', pauseTimer);
 router.post('/:id/timer/stop', stopTimer);

@@ -29,7 +29,7 @@ const EscalationRuleSchema = new Schema<IEscalationRule>(
   { timestamps: true }
 );
 
-export default mongoose.model<IEscalationRule>(
+export const EscalationRule = mongoose.model<IEscalationRule>(
   'EscalationRule',
   EscalationRuleSchema
 );

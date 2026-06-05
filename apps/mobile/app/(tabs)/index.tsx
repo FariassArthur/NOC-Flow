@@ -2,14 +2,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { occurrenceAPI, authAPI } from '../../lib/api';
+import { statusCount, priorityCount } from '@noc/shared';
 import StatusBadge from '../../components/StatusBadge';
 import PriorityBadge from '../../components/PriorityBadge';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
-
-const statusCount = (list: any[], status: string) => list.filter((o: any) => o.status === status).length;
-const priorityCount = (list: any[], priority: string) => list.filter((o: any) => o.priority === priority).length;
 
 function groupBy<T>(arr: T[], fn: (item: T) => string): Record<string, T[]> {
   return arr.reduce((acc, item) => {
@@ -76,9 +74,11 @@ export default function Dashboard() {
     });
     return Object.entries(buckets)
       .sort(([a], [b]) => {
-        const [da, ma] = a.split('/').map(Number);
-        const [db, mb] = b.split('/').map(Number);
-        return da + ma * 31 - (db + mb * 31);
+        const parseDateDM = (s: string) => {
+          const [d, m, y] = s.split('/').map(Number);
+          return y ? new Date(y, m - 1, d).getTime() : new Date(2025, m - 1, d).getTime();
+        };
+        return parseDateDM(a) - parseDateDM(b);
       })
       .slice(-7)
       .map(([label, value]) => ({ label, value }));

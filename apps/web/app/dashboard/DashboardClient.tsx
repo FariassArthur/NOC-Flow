@@ -19,6 +19,13 @@ export default function DashboardClient({
     } else {
       setAuth(true);
     }
+
+    const onUnauthorized = () => {
+      localStorage.removeItem('token');
+      router.push('/auth/login');
+    };
+    window.addEventListener('unauthorized', onUnauthorized);
+    return () => window.removeEventListener('unauthorized', onUnauthorized);
   }, [router]);
 
   if (!auth) {

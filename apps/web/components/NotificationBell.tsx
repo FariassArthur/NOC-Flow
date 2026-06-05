@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { notificationAPI } from '@noc/api-client';
 import type { Notification } from '@noc/shared';
 import Link from 'next/link';
+import { io, Socket } from 'socket.io-client';
 
 const typeColors: Record<string, string> = {
   new_occurrence: 'bg-accent-500',
@@ -54,9 +55,29 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const socketUrl = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001';
+    const socket: Socket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    socket.on('notification', (data: Notification) => {
+      setNotifications((prev) => [data, ...prev].slice(0, 50));
+      if (!data.read) setUnread((prev) => prev + 1);
+    });
+
+    socket.on('connect_error', () => {});
+
+    return () => { socket.disconnect(); };
+  }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {

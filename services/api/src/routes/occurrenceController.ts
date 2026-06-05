@@ -2,13 +2,14 @@ import { Response } from 'express';
 import { Occurrence } from '../models/Occurrence';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
-import Category from '../models/Category';
+import { Category } from '../models/Category';
 import { occurrenceSchema, updateOccurrenceSchema } from '@noc/shared';
 import type { AuthRequest } from '../middleware/auth';
 
-const sanitize = (val: any): string => {
+const sanitize = (val: unknown): string => {
   if (typeof val !== 'string') return '';
   if (val.startsWith('$')) return '';
+  if (val.includes('$')) return '';
   return val;
 };
 
@@ -54,7 +55,8 @@ export const listOccurrences = async (req: AuthRequest, res: Response) => {
       totalPages: Math.ceil(total / limitNum),
     });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[listOccurrences]', error.message);
+    res.status(400).json({ error: 'Erro ao listar ocorrências' });
   }
 };
 
@@ -76,7 +78,8 @@ export const getOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.json(occurrence);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[getOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao buscar ocorrência' });
   }
 };
 
@@ -124,7 +127,8 @@ export const createOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json(populated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[createOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao criar ocorrência' });
   }
 };
 
@@ -140,9 +144,7 @@ export const updateOccurrence = async (req: AuthRequest, res: Response) => {
 
     const oldData = occurrence.toObject();
     Object.assign(occurrence, data);
-    await occurrence.save();
 
-    // Add to history
     for (const key of Object.keys(data)) {
       if (oldData[key as keyof typeof oldData] !== data[key as keyof typeof data]) {
         occurrence.history.push({
@@ -190,17 +192,13 @@ export const updateOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[updateOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao atualizar ocorrência' });
   }
 };
 
 export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
   try {
-    const user = await User.findById(req.userId);
-    if (!user || user.department !== 'NOC') {
-      return res.status(403).json({ error: 'Apenas usuários do NOC podem registrar corretivas' });
-    }
-
     const { resolucao } = req.body;
 
     const { id } = req.params;
@@ -269,7 +267,8 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[resolveOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao resolver ocorrência' });
   }
 };
 
@@ -284,7 +283,8 @@ export const deleteOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.json({ message: 'Occurrence deleted' });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[deleteOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao excluir ocorrência' });
   }
 };
 
@@ -323,7 +323,8 @@ export const addAttachment = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[addAttachment]', error.message);
+    res.status(400).json({ error: 'Erro ao adicionar anexo' });
   }
 };
 
@@ -380,7 +381,8 @@ export const assignOccurrence = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[assignOccurrence]', error.message);
+    res.status(400).json({ error: 'Erro ao atribuir ocorrência' });
   }
 };
 
@@ -401,7 +403,8 @@ export const startTimer = async (req: AuthRequest, res: Response) => {
     await occurrence.save();
     res.json(occurrence);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[startTimer]', error.message);
+    res.status(400).json({ error: 'Erro ao iniciar timer' });
   }
 };
 
@@ -413,14 +416,18 @@ export const pauseTimer = async (req: AuthRequest, res: Response) => {
     if (!occurrence.timeTracking || occurrence.timeTracking.status !== 'running')
       return res.status(400).json({ error: 'Timer não está em execução' });
 
-    const elapsed = (Date.now() - new Date(occurrence.timeTracking.startTime!).getTime()) / 60000;
+    if (!occurrence.timeTracking.startTime) {
+      return res.status(400).json({ error: 'Timer sem tempo de início' });
+    }
+    const elapsed = (Date.now() - new Date(occurrence.timeTracking.startTime).getTime()) / 60000;
     occurrence.timeTracking.pausedMinutes += Math.round(elapsed * 100) / 100;
     occurrence.timeTracking.status = 'paused';
     occurrence.timeTracking.startTime = undefined;
     await occurrence.save();
     res.json(occurrence);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[pauseTimer]', error.message);
+    res.status(400).json({ error: 'Erro ao pausar timer' });
   }
 };
 
@@ -441,7 +448,8 @@ export const stopTimer = async (req: AuthRequest, res: Response) => {
     await occurrence.save();
     res.json(occurrence);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[stopTimer]', error.message);
+    res.status(400).json({ error: 'Erro ao parar timer' });
   }
 };
 
@@ -473,7 +481,8 @@ export const addRCA = async (req: AuthRequest, res: Response) => {
     ]);
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[addRCA]', error.message);
+    res.status(400).json({ error: 'Erro ao registrar RCA' });
   }
 };
 
@@ -504,7 +513,8 @@ export const addCommLog = async (req: AuthRequest, res: Response) => {
     ]);
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[addCommLog]', error.message);
+    res.status(400).json({ error: 'Erro ao registrar contato' });
   }
 };
 
@@ -559,6 +569,7 @@ export const addComment = async (req: AuthRequest, res: Response) => {
 
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    console.error('[addComment]', error.message);
+    res.status(400).json({ error: 'Erro ao adicionar comentário' });
   }
 };

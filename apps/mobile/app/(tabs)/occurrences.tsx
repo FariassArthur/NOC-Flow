@@ -17,16 +17,22 @@ export default function OccurrencesScreen() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [fetchError, setFetchError] = useState('');
 
   const fetch = useCallback(async () => {
-    const params: Record<string, any> = { page, limit: 20 };
-    if (statusFilter) params.status = statusFilter;
-    if (priorityFilter) params.priority = priorityFilter;
-    if (search) params.search = search;
-    const res = await occurrenceAPI.list(params);
-    setOccurrences(res.data || res);
-    setTotal(res.total ?? 0);
-    setTotalPages(res.totalPages ?? 1);
+    try {
+      const params: Record<string, any> = { page, limit: 20 };
+      if (statusFilter) params.status = statusFilter;
+      if (priorityFilter) params.priority = priorityFilter;
+      if (search) params.search = search;
+      const res = await occurrenceAPI.list(params);
+      setOccurrences(res.data || res);
+      setTotal(res.total ?? 0);
+      setTotalPages(res.totalPages ?? 1);
+      setFetchError('');
+    } catch {
+      setFetchError('Erro ao carregar ocorrências');
+    }
   }, [statusFilter, priorityFilter, search, page]);
 
   useEffect(() => { fetch().finally(() => setLoading(false)); }, [fetch]);
@@ -111,7 +117,14 @@ export default function OccurrencesScreen() {
         ) : null}
       </View>
 
-      {loading ? (
+      {fetchError ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 }}>
+          <Text style={{ color: '#f87171', fontSize: 15, marginBottom: 12 }}>{fetchError}</Text>
+          <TouchableOpacity onPress={() => { setLoading(true); fetch().finally(() => setLoading(false)); }} style={{ backgroundColor: '#f97316', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}>
+            <Text style={{ color: '#fff', fontWeight: '600' }}>Tentar Novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#f97316" />
         </View>

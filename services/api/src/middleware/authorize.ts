@@ -15,7 +15,8 @@ export const authorize = (...allowedRoles: string[]) => {
       req.user = user;
       next();
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      console.error('[authorize]', error.message);
+      res.status(400).json({ error: 'Erro de autorização' });
     }
   };
 };
@@ -30,7 +31,8 @@ export const authorizeNoc = () => {
       req.user = user;
       next();
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      console.error('[authorizeNoc]', error.message);
+      res.status(400).json({ error: 'Erro de autorização' });
     }
   };
 };

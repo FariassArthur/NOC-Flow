@@ -40,7 +40,7 @@ export default function OccurrenceDetailPage() {
   const [resError, setResError] = useState('');
   const [assigning, setAssigning] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [timerInterval, setTimerInterval] = useState<any>(null);
+  const [timerInterval, setTimerInterval] = useState<ReturnType<typeof setInterval> | null>(null);
   const [timerDisplay, setTimerDisplay] = useState('00:00:00');
   const [rcaForm, setRcaForm] = useState({ causaRaiz: '', tipo: 'hardware', impacto: '', acoesPreventivas: '' });
   const [rcaSaving, setRcaSaving] = useState(false);
@@ -67,6 +67,13 @@ export default function OccurrenceDetailPage() {
           setCurrentUser(user);
           setUsers(userList);
           setCategories(cats);
+          const tt = (occ as any).timeTracking;
+          if (tt?.status === 'running' && tt.startTime) {
+            const interval = setInterval(() => {
+              setTimerDisplay(calcTimerDisplay(tt.startTime, tt.pausedMinutes || 0));
+            }, 1000);
+            setTimerInterval(interval);
+          }
         })
         .catch(() => router.push('/dashboard/occurrences'))
         .finally(() => setLoading(false));
@@ -74,7 +81,7 @@ export default function OccurrenceDetailPage() {
   }, [params.id]);
 
   useEffect(() => {
-    return () => { if (timerInterval) clearInterval(timerInterval as any); };
+    return () => { if (timerInterval) clearInterval(timerInterval); };
   }, [timerInterval]);
 
   const calcTimerDisplay = (startTime: string | Date, pausedMinutes: number) => {
@@ -90,11 +97,14 @@ export default function OccurrenceDetailPage() {
     try {
       const updated = await occurrenceAPI.startTimer(occurrence._id as string);
       setOccurrence(updated);
-      const interval = setInterval(() => {
-        setTimerDisplay(calcTimerDisplay(new Date().toISOString(), 0));
-      }, 1000);
-      setTimerInterval(interval);
-      setTimerDisplay('00:00:00');
+      const tt = updated.timeTracking;
+      const startTime = tt?.startTime;
+      if (startTime) {
+        const interval = setInterval(() => {
+          setTimerDisplay(calcTimerDisplay(startTime, tt.pausedMinutes || 0));
+        }, 1000);
+        setTimerInterval(interval);
+      }
     } catch (err) { console.error(err); }
   };
 

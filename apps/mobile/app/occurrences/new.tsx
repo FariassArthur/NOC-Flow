@@ -50,7 +50,11 @@ export default function NewOccurrence() {
       const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
       const payload: any = { title, description, priority, tags: tagList, status: 'aberta', timeSpentMinutes: 0 };
       if (assignedTo) payload.assignedTo = assignedTo;
-      if (dueDate) payload.dueDate = new Date(dueDate).toISOString();
+      if (dueDate) {
+        const parsed = new Date(dueDate);
+        if (isNaN(parsed.getTime())) { setError('Data inválida'); setLoading(false); return; }
+        payload.dueDate = parsed.toISOString();
+      }
       if (selectedCategory) payload.category = selectedCategory;
       if (selectedEquipment) payload.equipment = selectedEquipment;
       if (selectedService) payload.service = selectedService;
