@@ -18,6 +18,9 @@ export default function AdminLayout() {
       <Stack.Screen name="escalations" options={{ title: 'Escalações' }} />
       <Stack.Screen name="templates" options={{ title: 'Templates' }} />
       <Stack.Screen name="departments" options={{ title: 'Setores' }} />
+      <Stack.Screen name="oncall" options={{ title: 'Plantão' }} />
+      <Stack.Screen name="knowledge" options={{ title: 'Conhecimento' }} />
+      <Stack.Screen name="report-schedules" options={{ title: 'Rel. Programados' }} />
     </Stack>
   );
 }

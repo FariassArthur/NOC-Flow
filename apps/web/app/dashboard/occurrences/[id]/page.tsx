@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { occurrenceAPI, authAPI, userAPI, categoryAPI } from '@ccore/api-client';
-import type { Occurrence, Category } from '@ccore/shared';
+import { occurrenceAPI, authAPI, userAPI } from '@ccore/api-client';
+import type { Occurrence } from '@ccore/shared';
 import TimerCard from '../../../../components/TimerCard';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -36,9 +36,8 @@ export default function OccurrenceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const [occurrence, setOccurrence] = useState<Occurrence | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [currentUser, setCurrentUser] = useState<Record<string, unknown> | null>(null);
+  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [sending, setSending] = useState(false);
@@ -88,7 +87,7 @@ export default function OccurrenceDetailPage() {
     if (!occurrence) return;
     try {
       const updated = await occurrenceAPI.update(occurrence._id as string, {
-        status: newStatus as any,
+        status: newStatus,
       });
       setOccurrence(updated);
     } catch (err) {
@@ -109,8 +108,9 @@ export default function OccurrenceDetailPage() {
       const updated = await occurrenceAPI.resolve(occurrence._id as string, resolucao);
       setOccurrence(updated);
       setResolucao('');
-    } catch (err: any) {
-      setResError(err.response?.data?.error || 'Erro ao registrar corretiva');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setResError(apiError.response?.data?.error || 'Erro ao registrar corretiva');
     } finally {
       setResolving(false);
     }
@@ -208,12 +208,22 @@ export default function OccurrenceDetailPage() {
   if (!occurrence)
     return <div className="text-center py-12 text-slate-400">Ocorrência não encontrada</div>;
 
-  const created = occurrence.createdBy as any;
-  const assigned = occurrence.assignedTo as any;
-  const resolvedUser = occurrence.resolvidoPor as any;
-  const cat = occurrence.category as any;
-  const equip = occurrence.equipment as any;
-  const svc = occurrence.service as any;
+  const created = occurrence.createdBy as
+    | { fullName?: string; department?: string; cargo?: string; _id?: string }
+    | undefined;
+  const assigned = occurrence.assignedTo as
+    | { fullName?: string; department?: string; _id?: string }
+    | undefined;
+  const resolvedUser = occurrence.resolvidoPor as
+    | { fullName?: string; department?: string; _id?: string }
+    | undefined;
+  const cat = occurrence.category as { _id?: string; name?: string; color?: string } | undefined;
+  const equip = occurrence.equipment as
+    | { _id?: string; name?: string; type?: string; ip?: string }
+    | undefined;
+  const svc = occurrence.service as
+    | { _id?: string; name?: string; type?: string; provider?: string }
+    | undefined;
   const transitions = statusTransitions[occurrence.status] || [];
   const isOverdue =
     occurrence.dueDate &&
@@ -350,6 +360,44 @@ export default function OccurrenceDetailPage() {
         </div>
       </div>
 
+      {/* SLA Status */}
+      {occurrence.slaStatus && (
+        <div className="card-glow p-4">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            SLA
+          </h3>
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium ${
+              occurrence.slaStatus === 'dentro'
+                ? 'bg-emerald-500/10 text-emerald-400'
+                : occurrence.slaStatus === 'atrasado'
+                  ? 'bg-yellow-500/10 text-yellow-400'
+                  : 'bg-red-500/10 text-red-400'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                occurrence.slaStatus === 'dentro'
+                  ? 'bg-emerald-400'
+                  : occurrence.slaStatus === 'atrasado'
+                    ? 'bg-yellow-400'
+                    : 'bg-red-400'
+              }`}
+            />
+            {occurrence.slaStatus === 'dentro'
+              ? 'Dentro do Prazo'
+              : occurrence.slaStatus === 'atrasado'
+                ? 'Em Atraso'
+                : 'Violado'}
+          </div>
+          {occurrence.slaBreachedAt && (
+            <p className="text-xs text-slate-500 mt-2">
+              Violado em: {new Date(occurrence.slaBreachedAt).toLocaleString('pt-BR')}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Category/Equipment/Service */}
       {(cat || equip || svc) && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -394,6 +442,22 @@ export default function OccurrenceDetailPage() {
       {/* Timer */}
       <TimerCard occurrence={occurrence} isNoc={isNoc} onUpdate={updateOccurrence} />
 
+      {!isNoc && occurrence.status !== 'finalizada' && (
+        <div className="card-wire border-accent-500/20">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="w-8 h-8 bg-accent-500/20 rounded-full flex items-center justify-center shrink-0">
+              <span className="text-accent-400 text-lg">&#8987;</span>
+            </div>
+            <div>
+              <p className="text-sm text-slate-200">Sua ocorrência foi registrada</p>
+              <p className="text-xs text-slate-400">
+                A equipe NOC está analisando e em breve atribuirá um responsável.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Assignment */}
       {isNoc && !occurrence.assignedTo && occurrence.status !== 'finalizada' && (
         <div className="card-wire">
@@ -411,9 +475,9 @@ export default function OccurrenceDetailPage() {
                 Selecione um usuário...
               </option>
               {users
-                .filter((u: any) => u._id !== currentUser?._id)
-                .map((u: any) => (
-                  <option key={u._id} value={u._id}>
+                .filter((u: Record<string, unknown>) => u._id !== currentUser?._id)
+                .map((u: Record<string, unknown>) => (
+                  <option key={u._id as string} value={u._id as string}>
                     {u.fullName} · {u.department} · {u.cargo}
                   </option>
                 ))}
@@ -437,9 +501,9 @@ export default function OccurrenceDetailPage() {
                 Trocar responsável...
               </option>
               {users
-                .filter((u: any) => u._id !== assigned?._id)
-                .map((u: any) => (
-                  <option key={u._id} value={u._id}>
+                .filter((u: Record<string, unknown>) => u._id !== assigned?._id)
+                .map((u: Record<string, unknown>) => (
+                  <option key={u._id as string} value={u._id as string}>
                     {u.fullName} · {u.department} · {u.cargo}
                   </option>
                 ))}
@@ -677,26 +741,29 @@ export default function OccurrenceDetailPage() {
               <p className="text-xs text-slate-500 uppercase tracking-wider">
                 Histórico de Contatos
               </p>
-              {[...occurrence.commLog].reverse().map((entry: any, idx: number) => (
-                <div
-                  key={entry._id || idx}
-                  className="flex items-start gap-3 p-2 rounded-lg bg-slate-700/20"
-                >
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium ${entry.contactType === 'provedor' ? 'bg-blue-500/10 text-blue-400' : entry.contactType === 'cliente' ? 'bg-emerald-500/10 text-emerald-400' : entry.contactType === 'fornecedor' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-500/10 text-slate-400'}`}
+              {[...occurrence.commLog]
+                .reverse()
+                .map((entry: Record<string, unknown>, idx: number) => (
+                  <div
+                    key={entry._id || idx}
+                    className="flex items-start gap-3 p-2 rounded-lg bg-slate-700/20"
                   >
-                    {entry.contactType}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-200">
-                      <span className="font-medium">{entry.contactName}</span>: {entry.description}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {new Date(entry.createdAt).toLocaleString('pt-BR')}
-                    </p>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-medium ${entry.contactType === 'provedor' ? 'bg-blue-500/10 text-blue-400' : entry.contactType === 'cliente' ? 'bg-emerald-500/10 text-emerald-400' : entry.contactType === 'fornecedor' ? 'bg-purple-500/10 text-purple-400' : 'bg-slate-500/10 text-slate-400'}`}
+                    >
+                      {entry.contactType}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-200">
+                        <span className="font-medium">{entry.contactName}</span>:{' '}
+                        {entry.description}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(entry.createdAt).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
@@ -708,7 +775,7 @@ export default function OccurrenceDetailPage() {
         <div className="relative z-10 space-y-3">
           {occurrence.attachments?.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {occurrence.attachments.map((att: any, idx: number) => (
+              {occurrence.attachments.map((att: Record<string, unknown>, idx: number) => (
                 <a
                   key={att._id || idx}
                   href={`${process.env.NEXT_PUBLIC_API_URL || ''}${att.fileUrl}`}
@@ -753,6 +820,50 @@ export default function OccurrenceDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Checklist */}
+      {occurrence.checklist && occurrence.checklist.length > 0 && isNoc && (
+        <div className="card-glow p-4">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            Checklist
+          </h3>
+          <div className="space-y-2">
+            {occurrence.checklist.map((item: Record<string, unknown>, index: number) => (
+              <label
+                key={item._id || index}
+                className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-700/30 transition-colors cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={item.done}
+                  onChange={async () => {
+                    try {
+                      const updated = await occurrenceAPI.toggleChecklistItem(
+                        occurrence._id!,
+                        item._id
+                      );
+                      setOccurrence(updated);
+                    } catch {}
+                  }}
+                  className="mt-0.5 rounded border-slate-600 text-accent-500 focus:ring-accent-500"
+                />
+                <div className="flex-1">
+                  <span
+                    className={`text-sm ${item.done ? 'text-slate-500 line-through' : 'text-slate-200'}`}
+                  >
+                    {item.text}
+                  </span>
+                  {item.done && item.doneBy && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Feito por {item.doneBy?.fullName || 'N/A'}
+                    </p>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Status actions */}
       {isNoc && transitions.length > 0 && occurrence.status !== 'em_execucao' && (
@@ -802,7 +913,7 @@ export default function OccurrenceDetailPage() {
           <p className="text-slate-500 text-center py-4 relative z-10">Nenhum comentário ainda</p>
         ) : (
           <div className="space-y-4 relative z-10">
-            {occurrence.comments?.map((c: any, idx: number) => (
+            {occurrence.comments?.map((c: Record<string, unknown>, idx: number) => (
               <div key={c._id?.toString() || idx} className="flex gap-3">
                 <div className="w-8 h-8 bg-accent-500/20 rounded-full flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-accent-500">
@@ -831,7 +942,7 @@ export default function OccurrenceDetailPage() {
         <div className="card-glow">
           <h2 className="text-lg font-semibold text-white mb-4 relative z-10">Histórico</h2>
           <div className="space-y-3 relative z-10">
-            {occurrence.history.map((entry: any, idx: number) => (
+            {occurrence.history.map((entry: Record<string, unknown>, idx: number) => (
               <div key={entry._id?.toString() || idx} className="flex items-start gap-3 text-sm">
                 <div className="w-2 h-2 rounded-full bg-accent-500 mt-1.5 shrink-0 shadow-[0_0_6px_rgba(249,115,22,0.5)]" />
                 <div className="flex-1 min-w-0">

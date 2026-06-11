@@ -7,28 +7,23 @@ import {
   ActivityIndicator,
   RefreshControl,
   Share,
-  Alert,
 } from 'react-native';
-import { occurrenceAPI, authAPI } from '../../lib/api';
+import { occurrenceAPI } from '../../lib/api';
 import { statusCount, priorityCount } from '@ccore/shared';
 import PieChart from '../../components/Charts/PieChart';
 import BarChart from '../../components/Charts/BarChart';
 
 export default function ReportsScreen() {
-  const [occurrences, setOccurrences] = useState<any[]>([]);
+  const [occurrences, setOccurrences] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState('');
-  const [user, setUser] = useState<any>(null);
-
   const fetchData = useCallback(async () => {
     try {
-      const [occRes, me] = await Promise.all([
-        occurrenceAPI.list(),
-        authAPI.me().catch(() => null),
-      ]);
-      setOccurrences(occRes.data || occRes || []);
-      setUser(me);
+      const [occRes] = await Promise.all([occurrenceAPI.list()]);
+      setOccurrences(
+        ((occRes as Record<string, unknown>).data as Record<string, unknown>[]) || occRes || []
+      );
       setFetchError('');
     } catch {
       setFetchError('Erro ao carregar relatórios');

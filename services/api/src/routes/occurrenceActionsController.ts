@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Occurrence } from '../models/Occurrence';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
@@ -13,7 +14,20 @@ const populateBase = [
   { path: 'service', select: 'name type provider' },
 ];
 
-const getNotifiedUserIds = (occurrence: any, currentUserId: string): Set<string> => {
+const canAccessOccurrence = async (
+  userId: string,
+  occurrence: { createdBy?: { toString(): string } }
+): Promise<boolean> => {
+  const user = await User.findById(userId);
+  if (!user) return false;
+  if (user.department === 'NOC') return true;
+  return occurrence.createdBy?.toString() === userId;
+};
+
+const getNotifiedUserIds = (
+  occurrence: { createdBy?: { toString(): string }; assignedTo?: { toString(): string } },
+  currentUserId: string
+): Set<string> => {
   const ids = new Set<string>();
   const createdById = occurrence.createdBy?.toString();
   const assignedToId = occurrence.assignedTo?.toString();
@@ -33,7 +47,7 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
 
     const oldStatus = occurrence.status;
     occurrence.resolucao = resolucao;
-    occurrence.resolvidoPor = req.userId as any;
+    occurrence.resolvidoPor = req.userId as unknown as mongoose.Types.ObjectId;
     occurrence.resolvidoEm = new Date();
     occurrence.status = 'finalizada';
     occurrence.history.push(
@@ -41,14 +55,14 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
         field: 'status',
         oldValue: oldStatus,
         newValue: 'finalizada',
-        changedBy: req.userId as any,
+        changedBy: req.userId as unknown as mongoose.Types.ObjectId,
         changedAt: new Date(),
       },
       {
         field: 'resolucao',
         oldValue: '',
         newValue: 'Corretiva registrada',
-        changedBy: req.userId as any,
+        changedBy: req.userId as unknown as mongoose.Types.ObjectId,
         changedAt: new Date(),
       }
     );
@@ -75,8 +89,8 @@ export const resolveOccurrence = async (req: AuthRequest, res: Response) => {
       { path: 'resolvidoPor', select: 'fullName email department cargo' },
     ]);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[resolveOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[resolveOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao resolver ocorrência' });
   }
 };
@@ -96,12 +110,12 @@ export const assignOccurrence = async (req: AuthRequest, res: Response) => {
       if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    occurrence.assignedTo = assignedTo || (null as any);
+    occurrence.assignedTo = assignedTo || (null as unknown as mongoose.Types.ObjectId);
     occurrence.history.push({
       field: 'assignedTo',
       oldValue: oldAssigned || 'Nenhum',
       newValue: assignedTo || 'Nenhum',
-      changedBy: req.userId as any,
+      changedBy: req.userId as unknown as mongoose.Types.ObjectId,
       changedAt: new Date(),
     });
     await occurrence.save();
@@ -123,8 +137,8 @@ export const assignOccurrence = async (req: AuthRequest, res: Response) => {
       { path: 'assignedTo', select: 'fullName email department cargo' },
     ]);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[assignOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[assignOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao atribuir ocorrência' });
   }
 };
@@ -138,6 +152,10 @@ export const addAttachment = async (req: AuthRequest, res: Response) => {
 
     const occurrence = await Occurrence.findById(id);
     if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+
+    if (!(await canAccessOccurrence(req.userId!, occurrence))) {
+      return res.status(403).json({ error: 'Acesso restrito às suas próprias ocorrências' });
+    }
     if (occurrence.status === 'finalizada')
       return res
         .status(400)
@@ -148,8 +166,8 @@ export const addAttachment = async (req: AuthRequest, res: Response) => {
 
     const updated = await occurrence.populate(populateBase);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[addAttachment]', error.message);
+  } catch (error: unknown) {
+    logger.error('[addAttachment]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao adicionar anexo' });
   }
 };
@@ -161,7 +179,15 @@ export const addComment = async (req: AuthRequest, res: Response) => {
     const occurrence = await Occurrence.findById(id);
     if (!occurrence) return res.status(404).json({ error: 'Occurrence not found' });
 
-    occurrence.comments.push({ author: req.userId as any, text, createdAt: new Date() });
+    if (!(await canAccessOccurrence(req.userId!, occurrence))) {
+      return res.status(403).json({ error: 'Acesso restrito às suas próprias ocorrências' });
+    }
+
+    occurrence.comments.push({
+      author: req.userId as unknown as mongoose.Types.ObjectId,
+      text,
+      createdAt: new Date(),
+    });
     await occurrence.save();
 
     const commenter = await User.findById(req.userId);
@@ -185,8 +211,8 @@ export const addComment = async (req: AuthRequest, res: Response) => {
       ...populateBase,
     ]);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[addComment]', error.message);
+  } catch (error: unknown) {
+    logger.error('[addComment]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao adicionar comentário' });
   }
 };
@@ -207,8 +233,8 @@ export const startTimer = async (req: AuthRequest, res: Response) => {
     };
     await occurrence.save();
     res.json(occurrence);
-  } catch (error: any) {
-    logger.error('[startTimer]', error.message);
+  } catch (error: unknown) {
+    logger.error('[startTimer]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao iniciar timer' });
   }
 };
@@ -229,8 +255,8 @@ export const pauseTimer = async (req: AuthRequest, res: Response) => {
     occurrence.timeTracking.startTime = undefined;
     await occurrence.save();
     res.json(occurrence);
-  } catch (error: any) {
-    logger.error('[pauseTimer]', error.message);
+  } catch (error: unknown) {
+    logger.error('[pauseTimer]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao pausar timer' });
   }
 };
@@ -259,8 +285,8 @@ export const stopTimer = async (req: AuthRequest, res: Response) => {
     };
     await occurrence.save();
     res.json(occurrence);
-  } catch (error: any) {
-    logger.error('[stopTimer]', error.message);
+  } catch (error: unknown) {
+    logger.error('[stopTimer]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao parar timer' });
   }
 };
@@ -281,14 +307,14 @@ export const addRCA = async (req: AuthRequest, res: Response) => {
       field: 'rca',
       oldValue: '',
       newValue: `RCA: ${causaRaiz.substring(0, 50)}...`,
-      changedBy: req.userId as any,
+      changedBy: req.userId as unknown as mongoose.Types.ObjectId,
       changedAt: new Date(),
     });
     await occurrence.save();
     const updated = await occurrence.populate(populateBase);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[addRCA]', error.message);
+  } catch (error: unknown) {
+    logger.error('[addRCA]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao registrar RCA' });
   }
 };
@@ -306,19 +332,48 @@ export const addCommLog = async (req: AuthRequest, res: Response) => {
       contactType,
       description,
       createdAt: new Date(),
-    } as any);
+    });
     occurrence.history.push({
       field: 'commLog',
       oldValue: '',
       newValue: `Contato: ${contactName} (${contactType})`,
-      changedBy: req.userId as any,
+      changedBy: req.userId as unknown as mongoose.Types.ObjectId,
       changedAt: new Date(),
     });
     await occurrence.save();
     const updated = await occurrence.populate(populateBase);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[addCommLog]', error.message);
+  } catch (error: unknown) {
+    logger.error('[addCommLog]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao registrar contato' });
+  }
+};
+
+export const toggleChecklistItem = async (req: AuthRequest, res: Response) => {
+  try {
+    const { id, itemId } = req.params;
+    const { done } = req.body;
+
+    const occurrence = await Occurrence.findById(id);
+    if (!occurrence) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+
+    const item = (
+      occurrence.checklist as unknown as {
+        id(id: string): { done: boolean; doneBy?: string; doneAt?: Date } | undefined;
+      }
+    )?.id(itemId);
+    if (!item) return res.status(404).json({ error: 'Item não encontrado' });
+
+    item.done = done ?? !item.done;
+    item.doneBy = item.done ? req.userId : undefined;
+    item.doneAt = item.done ? new Date() : undefined;
+
+    await occurrence.save();
+
+    const updated = await occurrence.populate('checklist.doneBy', 'fullName');
+    res.json(updated);
+  } catch (error: unknown) {
+    logger.error('[toggleChecklistItem]', error instanceof Error ? error.message : String(error));
+    res.status(400).json({ error: 'Erro ao atualizar checklist' });
   }
 };

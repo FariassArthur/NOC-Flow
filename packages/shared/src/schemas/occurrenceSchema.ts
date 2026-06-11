@@ -1,11 +1,19 @@
 import { z } from 'zod';
 
+export const checklistItemSchema = z.object({
+  text: z.string().min(1, 'Texto do item é obrigatório'),
+  done: z.boolean().default(false),
+  doneBy: z.string().optional(),
+  doneAt: z.coerce.date().optional(),
+});
+
 export const occurrenceSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   status: z.enum(['aberta', 'em_execucao', 'finalizada']).default('aberta'),
   priority: z.enum(['baixa', 'média', 'alta', 'crítica']).default('média'),
   tags: z.array(z.string()).default([]),
+  checklist: z.array(checklistItemSchema).default([]),
   assignedTo: z.string().optional(),
   dueDate: z.coerce.date().optional(),
   timeSpentMinutes: z.number().default(0),
@@ -67,10 +75,12 @@ export const runbookSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório'),
   category: z.string().optional(),
   priority: z.string().optional(),
-  steps: z.array(z.object({
-    order: z.number(),
-    description: z.string().min(1, 'Descrição do passo é obrigatória'),
-  })),
+  steps: z.array(
+    z.object({
+      order: z.number(),
+      description: z.string().min(1, 'Descrição do passo é obrigatória'),
+    })
+  ),
   tags: z.array(z.string()).optional(),
 });
 

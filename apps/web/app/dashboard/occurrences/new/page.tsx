@@ -21,11 +21,11 @@ const priorities = [
 
 export default function NewOccurrencePage() {
   const router = useRouter();
-  const [users, setUsers] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [equipment, setEquipment] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
+  const [categories, setCategories] = useState<Record<string, unknown>[]>([]);
+  const [equipment, setEquipment] = useState<Record<string, unknown>[]>([]);
+  const [services, setServices] = useState<Record<string, unknown>[]>([]);
+  const [templates, setTemplates] = useState<Record<string, unknown>[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [form, setForm] = useState({
     title: '',
@@ -72,9 +72,9 @@ export default function NewOccurrencePage() {
     const tmpl = templates.find((t) => t._id === templateId);
     if (!tmpl) return;
 
-    const cat = categories.find((c: any) => c.name === tmpl.category);
-    const eq = equipment.find((e: any) => e.name === tmpl.equipment);
-    const svc = services.find((s: any) => s.name === tmpl.service);
+    const cat = categories.find((c: Record<string, unknown>) => c.name === tmpl.category);
+    const eq = equipment.find((e: Record<string, unknown>) => e.name === tmpl.equipment);
+    const svc = services.find((s: Record<string, unknown>) => s.name === tmpl.service);
 
     setForm((prev) => ({
       ...prev,
@@ -107,8 +107,9 @@ export default function NewOccurrencePage() {
       const created = await occurrenceAPI.create({
         title: form.title,
         description: form.description,
-        priority: form.priority as any,
+        priority: form.priority,
         tags,
+        checklist: [],
         status: 'aberta' as const,
         assignedTo: form.assignedTo || undefined,
         dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
@@ -119,10 +120,13 @@ export default function NewOccurrencePage() {
       });
 
       router.push(`/dashboard/occurrences/${created._id}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const apiError = err as {
+        response?: { data?: { error?: string; details?: { message?: string }[] } };
+      };
       setError(
-        err.response?.data?.error ||
-          err.response?.data?.details?.[0]?.message ||
+        apiError.response?.data?.error ||
+          apiError.response?.data?.details?.[0]?.message ||
           'Erro ao criar ocorrência'
       );
     } finally {
@@ -154,8 +158,8 @@ export default function NewOccurrencePage() {
             className="input-field"
           >
             <option value="">Sem template</option>
-            {templates.map((t: any) => (
-              <option key={t._id} value={t._id}>
+            {templates.map((t: Record<string, unknown>) => (
+              <option key={t._id as string} value={t._id as string}>
                 {t.name}
               </option>
             ))}
@@ -222,8 +226,8 @@ export default function NewOccurrencePage() {
               className="input-field"
             >
               <option value="">Não atribuir</option>
-              {users.map((u: any) => (
-                <option key={u._id} value={u._id}>
+              {users.map((u: Record<string, unknown>) => (
+                <option key={u._id as string} value={u._id as string}>
                   {u.fullName} · {u.department}
                 </option>
               ))}
@@ -270,8 +274,8 @@ export default function NewOccurrencePage() {
               className="input-field"
             >
               <option value="">Sem categoria</option>
-              {categories.map((c: any) => (
-                <option key={c._id} value={c._id}>
+              {categories.map((c: Record<string, unknown>) => (
+                <option key={c._id as string} value={c._id as string}>
                   {c.name}
                 </option>
               ))}
@@ -286,8 +290,8 @@ export default function NewOccurrencePage() {
               className="input-field"
             >
               <option value="">Sem equipamento</option>
-              {equipment.map((e: any) => (
-                <option key={e._id} value={e._id}>
+              {equipment.map((e: Record<string, unknown>) => (
+                <option key={e._id as string} value={e._id as string}>
                   {e.name} ({e.type})
                 </option>
               ))}
@@ -302,8 +306,8 @@ export default function NewOccurrencePage() {
               className="input-field"
             >
               <option value="">Sem serviço</option>
-              {services.map((s: any) => (
-                <option key={s._id} value={s._id}>
+              {services.map((s: Record<string, unknown>) => (
+                <option key={s._id as string} value={s._id as string}>
                   {s.name}
                 </option>
               ))}

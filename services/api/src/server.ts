@@ -22,8 +22,14 @@ import auditRoutes from './routes/audit';
 import reportRoutes from './routes/reports';
 import departmentRoutes from './routes/departments';
 import templateRoutes from './routes/templates';
+import oncallShiftRoutes from './routes/oncallShifts';
+import knowledgeRoutes from './routes/knowledge';
+import dashboardRoutes from './routes/dashboard';
+import equipmentHistoryRoutes from './routes/equipmentHistory';
+import reportScheduleRoutes from './routes/reportSchedules';
 import { authMiddleware } from './middleware/auth';
 import { startEscalationScheduler } from './services/escalationScheduler';
+import { startReportScheduler } from './services/reportScheduler';
 import { logger } from './utils/logger';
 
 const app = express();
@@ -73,13 +79,26 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/oncall-shifts', oncallShiftRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/equipment-history', equipmentHistoryRoutes);
+app.use('/api/report-schedules', reportScheduleRoutes);
 
 // Error handling
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('[Error]', err?.message || err || 'Unknown error');
-  const status = typeof err?.status === 'number' ? err.status : 500;
-  res.status(status).json({ error: 'Erro interno do servidor' });
-});
+app.use(
+  (err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    logger.error('[Error]', err instanceof Error ? err.message : String(err));
+    const status =
+      typeof err === 'object' &&
+      err !== null &&
+      'status' in err &&
+      typeof (err as Record<string, unknown>).status === 'number'
+        ? (err as { status: number }).status
+        : 500;
+    res.status(status).json({ error: 'Erro interno do servidor' });
+  }
+);
 
 // Start server
 const start = async () => {
@@ -93,6 +112,7 @@ const start = async () => {
     await connectDB();
     initSocketIO(httpServer);
     startEscalationScheduler();
+    startReportScheduler();
     httpServer.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`);
       logger.info(`Socket.IO running on ws://localhost:${PORT}`);

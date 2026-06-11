@@ -1,4 +1,10 @@
-export type NotificationType = 'new_occurrence' | 'status_change' | 'assignment' | 'comment' | 'escalation';
+export type NotificationType =
+  | 'new_occurrence'
+  | 'status_change'
+  | 'assignment'
+  | 'comment'
+  | 'escalation'
+  | 'scheduled_report';
 
 export interface Notification {
   _id?: string;

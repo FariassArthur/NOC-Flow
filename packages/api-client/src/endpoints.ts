@@ -15,6 +15,9 @@ import type {
   EscalationRule,
   Department,
   OccurrenceTemplate,
+  OnCallShift,
+  KnowledgeArticle,
+  ReportSchedule,
 } from '@ccore/shared';
 
 export function createAuthAPI(client: APIClient) {
@@ -120,6 +123,19 @@ export function createOccurrenceAPI(client: APIClient) {
       return response.data;
     },
 
+    uploadFile: async (uri: string, name: string) => {
+      const formData = new FormData();
+      formData.append('file', { uri, name, type: 'application/octet-stream' } as unknown as Blob);
+      const response = await client.instance.post<{
+        fileName: string;
+        fileUrl: string;
+        size: number;
+      }>('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    },
+
     startTimer: async (id: string) => {
       const response = await client.instance.post<Occurrence>(`/api/occurrences/${id}/timer/start`);
       return response.data;
@@ -150,6 +166,14 @@ export function createOccurrenceAPI(client: APIClient) {
       const response = await client.instance.post<Occurrence>(
         `/api/occurrences/${id}/commlog`,
         data
+      );
+      return response.data;
+    },
+
+    toggleChecklistItem: async (id: string, itemId: string, done?: boolean) => {
+      const response = await client.instance.post<Occurrence>(
+        `/api/occurrences/${id}/checklist/${itemId}/toggle`,
+        { done }
       );
       return response.data;
     },
@@ -440,7 +464,7 @@ export function createAuditAPI(client: APIClient) {
       const response = await client.instance.get<{
         totalLogs: number;
         actions: { _id: string; count: number }[];
-        recentLogins: any[];
+        recentLogins: { userId: string; timestamp: string; ip?: string }[];
       }>('/api/audit/stats');
       return response.data;
     },
@@ -476,7 +500,7 @@ export function createReportAPI(client: APIClient) {
         totalOccurrences: number;
         statusCounts: Record<string, number>;
         priorityCounts: Record<string, number>;
-        topCreators: { userId: string; count: number; user: any }[];
+        topCreators: { userId: string; count: number; user: UserWithoutPassword }[];
         avgResolutionTimeMinutes: number;
         slaStats: { dentro: number; atrasado: number; violado: number; semSLA: number };
       }>('/api/reports/summary', { params });
@@ -525,6 +549,134 @@ export function createDepartmentAPI(client: APIClient) {
   };
 }
 
+export function createDashboardAPI(client: APIClient) {
+  return {
+    stats: async (params?: { from?: string; to?: string }) => {
+      const response = await client.instance.get('/api/dashboard/stats', { params });
+      return response.data;
+    },
+    timeline: async (days?: number) => {
+      const response = await client.instance.get('/api/dashboard/timeline', {
+        params: { days },
+      });
+      return response.data;
+    },
+    departmentSla: async (params?: { from?: string; to?: string }) => {
+      const response = await client.instance.get('/api/dashboard/department-sla', { params });
+      return response.data;
+    },
+  };
+}
+
+export function createOnCallAPI(client: APIClient) {
+  return {
+    list: async (params?: { department?: string; active?: string }) => {
+      const response = await client.instance.get<{ data: OnCallShift[] }>('/api/oncall-shifts', {
+        params,
+      });
+      return response.data;
+    },
+    get: async (id: string) => {
+      const response = await client.instance.get<OnCallShift>(`/api/oncall-shifts/${id}`);
+      return response.data;
+    },
+    create: async (data: Partial<OnCallShift>) => {
+      const response = await client.instance.post<OnCallShift>('/api/oncall-shifts', data);
+      return response.data;
+    },
+    update: async (id: string, data: Partial<OnCallShift>) => {
+      const response = await client.instance.put<OnCallShift>(`/api/oncall-shifts/${id}`, data);
+      return response.data;
+    },
+    delete: async (id: string) => {
+      await client.instance.delete(`/api/oncall-shifts/${id}`);
+    },
+    current: async () => {
+      const response = await client.instance.get('/api/oncall-shifts/current');
+      return response.data;
+    },
+  };
+}
+
+export function createKnowledgeAPI(client: APIClient) {
+  return {
+    list: async (params?: {
+      search?: string;
+      category?: string;
+      published?: string;
+      page?: number;
+      limit?: number;
+    }) => {
+      const response = await client.instance.get<{
+        data: KnowledgeArticle[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>('/api/knowledge', { params });
+      return response.data;
+    },
+    get: async (id: string) => {
+      const response = await client.instance.get<KnowledgeArticle>(`/api/knowledge/${id}`);
+      return response.data;
+    },
+    create: async (data: Partial<KnowledgeArticle>) => {
+      const response = await client.instance.post<KnowledgeArticle>('/api/knowledge', data);
+      return response.data;
+    },
+    update: async (id: string, data: Partial<KnowledgeArticle>) => {
+      const response = await client.instance.put<KnowledgeArticle>(`/api/knowledge/${id}`, data);
+      return response.data;
+    },
+    delete: async (id: string) => {
+      await client.instance.delete(`/api/knowledge/${id}`);
+    },
+    categories: async () => {
+      const response = await client.instance.get<string[]>('/api/knowledge/categories');
+      return response.data;
+    },
+  };
+}
+
+export function createEquipmentHistoryAPI(client: APIClient) {
+  return {
+    list: async (equipmentId: string, params?: { page?: number; limit?: number }) => {
+      const response = await client.instance.get(`/api/equipment-history/${equipmentId}`, {
+        params,
+      });
+      return response.data;
+    },
+    summary: async (equipmentId: string) => {
+      const response = await client.instance.get(`/api/equipment-history/${equipmentId}/summary`);
+      return response.data;
+    },
+  };
+}
+
+export function createReportScheduleAPI(client: APIClient) {
+  return {
+    list: async () => {
+      const response = await client.instance.get<{ data: ReportSchedule[] }>(
+        '/api/report-schedules'
+      );
+      return response.data;
+    },
+    create: async (data: Partial<ReportSchedule>) => {
+      const response = await client.instance.post<ReportSchedule>('/api/report-schedules', data);
+      return response.data;
+    },
+    update: async (id: string, data: Partial<ReportSchedule>) => {
+      const response = await client.instance.put<ReportSchedule>(
+        `/api/report-schedules/${id}`,
+        data
+      );
+      return response.data;
+    },
+    delete: async (id: string) => {
+      await client.instance.delete(`/api/report-schedules/${id}`);
+    },
+  };
+}
+
 export function createAllEndpoints(client: APIClient) {
   return {
     authAPI: createAuthAPI(client),
@@ -541,6 +693,11 @@ export function createAllEndpoints(client: APIClient) {
     reportAPI: createReportAPI(client),
     departmentAPI: createDepartmentAPI(client),
     templateAPI: createTemplateAPI(client),
+    dashboardAPI: createDashboardAPI(client),
+    onCallAPI: createOnCallAPI(client),
+    knowledgeAPI: createKnowledgeAPI(client),
+    equipmentHistoryAPI: createEquipmentHistoryAPI(client),
+    reportScheduleAPI: createReportScheduleAPI(client),
   };
 }
 
@@ -558,3 +715,8 @@ export const auditAPI = createAuditAPI(apiClient);
 export const reportAPI = createReportAPI(apiClient);
 export const departmentAPI = createDepartmentAPI(apiClient);
 export const templateAPI = createTemplateAPI(apiClient);
+export const dashboardAPI = createDashboardAPI(apiClient);
+export const onCallAPI = createOnCallAPI(apiClient);
+export const knowledgeAPI = createKnowledgeAPI(apiClient);
+export const equipmentHistoryAPI = createEquipmentHistoryAPI(apiClient);
+export const reportScheduleAPI = createReportScheduleAPI(apiClient);

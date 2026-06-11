@@ -1,10 +1,12 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Occurrence } from '../models/Occurrence';
 import { User } from '../models/User';
 import { Notification } from '../models/Notification';
 import { occurrenceSchema, updateOccurrenceSchema } from '@ccore/shared';
 import type { AuthRequest } from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { calculateSlaDeadline } from '../services/slaService';
 
 const sanitize = (val: unknown): string => {
   if (typeof val !== 'string') return '';
@@ -23,7 +25,12 @@ const populateBase = [
 export const listOccurrences = async (req: AuthRequest, res: Response) => {
   try {
     const { status, assignedTo, priority, search, page, limit } = req.query;
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
+
+    const currentUser = await User.findById(req.userId);
+    if (currentUser && currentUser.department !== 'NOC') {
+      filter.createdBy = req.userId;
+    }
 
     if (status && typeof status === 'string') filter.status = sanitize(status);
     if (assignedTo && typeof assignedTo === 'string') filter.assignedTo = sanitize(assignedTo);
@@ -48,8 +55,8 @@ export const listOccurrences = async (req: AuthRequest, res: Response) => {
     ]);
 
     res.json({ data: occurrences, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
-  } catch (error: any) {
-    logger.error('[listOccurrences]', error.message);
+  } catch (error: unknown) {
+    logger.error('[listOccurrences]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao listar ocorrências' });
   }
 };
@@ -63,9 +70,18 @@ export const getOccurrence = async (req: AuthRequest, res: Response) => {
       .populate('history.changedBy', 'fullName email department cargo');
 
     if (!occurrence) return res.status(404).json({ error: 'Occurrence not found' });
+
+    const currentUser = await User.findById(req.userId);
+    if (currentUser && currentUser.department !== 'NOC') {
+      const createdById = occurrence.createdBy?.toString();
+      if (createdById !== req.userId) {
+        return res.status(403).json({ error: 'Acesso restrito às suas próprias ocorrências' });
+      }
+    }
+
     res.json(occurrence);
-  } catch (error: any) {
-    logger.error('[getOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[getOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao buscar ocorrência' });
   }
 };
@@ -79,33 +95,30 @@ export const createOccurrence = async (req: AuthRequest, res: Response) => {
       comments: [],
       attachments: [],
       history: [],
+      dueDate: (await calculateSlaDeadline(data.priority, data.category)) || undefined,
     });
 
     const creator = await User.findById(req.userId);
     if (creator) {
-      const otherUsers = await User.find({
-        _id: { $ne: req.userId },
-        department: { $ne: creator.department },
-      });
+      const nocUsers = await User.find({ department: 'NOC', _id: { $ne: req.userId } });
 
-      const notifications = otherUsers.map((user) => ({
-        recipient: user._id.toString(),
-        type: 'new_occurrence' as const,
-        title: 'Nova Ocorrência',
-        message: `${creator.fullName} (${creator.department}) abriu "${occurrence.title}"`,
-        relatedOccurrence: occurrence._id.toString(),
-        read: false,
-      }));
-
-      if (notifications.length > 0) {
+      if (nocUsers.length > 0) {
+        const notifications = nocUsers.map((user) => ({
+          recipient: user._id.toString(),
+          type: 'new_occurrence' as const,
+          title: 'Nova Ocorrência',
+          message: `${creator.fullName} (${creator.department}) abriu "${occurrence.title}"`,
+          relatedOccurrence: occurrence._id.toString(),
+          read: false,
+        }));
         await Notification.insertMany(notifications);
       }
     }
 
     const populated = await occurrence.populate(populateBase);
     res.status(201).json(populated);
-  } catch (error: any) {
-    logger.error('[createOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[createOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao criar ocorrência' });
   }
 };
@@ -127,7 +140,7 @@ export const updateOccurrence = async (req: AuthRequest, res: Response) => {
           field: key,
           oldValue: String(oldData[key as keyof typeof oldData] || ''),
           newValue: String(data[key as keyof typeof data] || ''),
-          changedBy: req.userId as any,
+          changedBy: req.userId as unknown as mongoose.Types.ObjectId,
           changedAt: new Date(),
         });
       }
@@ -159,8 +172,8 @@ export const updateOccurrence = async (req: AuthRequest, res: Response) => {
 
     const updated = await occurrence.populate(populateBase);
     res.json(updated);
-  } catch (error: any) {
-    logger.error('[updateOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[updateOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao atualizar ocorrência' });
   }
 };
@@ -171,8 +184,8 @@ export const deleteOccurrence = async (req: AuthRequest, res: Response) => {
     const occurrence = await Occurrence.findByIdAndDelete(id);
     if (!occurrence) return res.status(404).json({ error: 'Occurrence not found' });
     res.json({ message: 'Occurrence deleted' });
-  } catch (error: any) {
-    logger.error('[deleteOccurrence]', error.message);
+  } catch (error: unknown) {
+    logger.error('[deleteOccurrence]', error instanceof Error ? error.message : String(error));
     res.status(400).json({ error: 'Erro ao excluir ocorrência' });
   }
 };

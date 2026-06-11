@@ -3,12 +3,15 @@ import { useRouter } from 'expo-router';
 
 const adminLinks = [
   { route: '/admin/users', label: 'Usuários', icon: 'U' },
-  { route: '/admin/departments', label: 'Setores', icon: 'S' },
+  { route: '/admin/departments', label: 'Setores', icon: 'D' },
   { route: '/admin/categories', label: 'Categorias', icon: 'C' },
   { route: '/admin/equipment', label: 'Equipamentos', icon: 'E' },
   { route: '/admin/services', label: 'Serviços', icon: 'S' },
   { route: '/admin/templates', label: 'Templates', icon: 'T' },
   { route: '/admin/escalations', label: 'Escalações', icon: 'E' },
+  { route: '/admin/oncall', label: 'Plantão', icon: 'P' },
+  { route: '/admin/knowledge', label: 'Conhecimento', icon: 'K' },
+  { route: '/admin/report-schedules', label: 'Rel. Programados', icon: 'R' },
 ];
 
 export default function AdminIndex() {
@@ -26,7 +29,7 @@ export default function AdminIndex() {
         {adminLinks.map((link) => (
           <TouchableOpacity
             key={link.route}
-            onPress={() => router.push(link.route as any)}
+            onPress={() => router.push(link.route as never)}
             style={{
               backgroundColor: '#1e293b',
               borderRadius: 16,

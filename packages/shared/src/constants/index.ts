@@ -55,4 +55,5 @@ export const NOTIFICATION_TYPE_OPTIONS = {
   assignment: { label: 'Atribuição', color: '#8b5cf6' },
   comment: { label: 'Comentário', color: '#10b981' },
   escalation: { label: 'Escalonamento', color: '#ec4899' },
+  scheduled_report: { label: 'Relatório Agendado', color: '#14b8a6' },
 } as const satisfies Record<NotificationType, { label: string; color: string }>;

@@ -171,6 +171,26 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="knowledge"
+        options={{
+          title: 'Conhecimento',
+          tabBarIcon: ({ color }) => (
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color, fontSize: 13, fontWeight: 'bold' }}>K</Text>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',

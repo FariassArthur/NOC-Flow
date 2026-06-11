@@ -93,6 +93,14 @@ const occurrenceSchema = new mongoose.Schema<OccurrenceSchema>(
         uploadedAt: { type: Date, default: Date.now },
       },
     ],
+    checklist: [
+      {
+        text: { type: String, required: true },
+        done: { type: Boolean, default: false },
+        doneBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        doneAt: Date,
+      },
+    ],
     history: [
       {
         field: String,

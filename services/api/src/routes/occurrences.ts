@@ -28,6 +28,7 @@ import {
   stopTimer,
   addRCA,
   addCommLog,
+  toggleChecklistItem,
 } from './occurrenceActionsController';
 
 const router = Router();
@@ -43,6 +44,8 @@ router.post(
   validateBody(z.object({ fileName: z.string().min(1), fileUrl: z.string().min(1) })),
   addAttachment
 );
+
+router.post('/:id/checklist/:itemId/toggle', toggleChecklistItem);
 
 router.use(authorizeNoc);
 

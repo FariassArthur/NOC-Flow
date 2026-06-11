@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { occurrenceAPI } from '@ccore/api-client';
-import type { Occurrence, PaginatedResponse } from '@ccore/shared';
+import type { Occurrence } from '@ccore/shared';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   aberta: { label: 'Aberta', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
@@ -37,7 +37,7 @@ export default function OccurrencesPage() {
 
   const fetchOccurrences = useCallback(() => {
     setLoading(true);
-    const params: Record<string, any> = { page, limit: 20 };
+    const params: Record<string, string | number | undefined> = { page, limit: 20 };
     if (statusFilter) params.status = statusFilter;
     if (priorityFilter) params.priority = priorityFilter;
     if (search) params.search = search;
@@ -45,7 +45,7 @@ export default function OccurrencesPage() {
     occurrenceAPI
       .list(params)
       .then((res) => {
-        const data = res as any;
+        const data = res as Record<string, unknown>;
         if (data.data) {
           setOccurrences(data.data);
           setTotal(data.total);
@@ -159,7 +159,9 @@ export default function OccurrencesPage() {
         <>
           <div className="space-y-3">
             {occurrences.map((occ) => {
-              const created = occ.createdBy as any;
+              const created = occ.createdBy as
+                | { fullName?: string; department?: string; _id?: string }
+                | undefined;
               return (
                 <Link
                   key={occ._id?.toString()}
@@ -194,11 +196,28 @@ export default function OccurrencesPage() {
                         )}
                       </div>
                     </div>
-                    <span
-                      className={`badge-status shrink-0 ${statusConfig[occ.status]?.color || ''}`}
-                    >
-                      {statusConfig[occ.status]?.label || occ.status}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`badge-status ${statusConfig[occ.status]?.color || ''}`}>
+                        {statusConfig[occ.status]?.label || occ.status}
+                      </span>
+                      {occ.slaStatus && (
+                        <span
+                          className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                            occ.slaStatus === 'dentro'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : occ.slaStatus === 'atrasado'
+                                ? 'bg-yellow-500/10 text-yellow-400'
+                                : 'bg-red-500/10 text-red-400'
+                          }`}
+                        >
+                          {occ.slaStatus === 'dentro'
+                            ? 'SLA OK'
+                            : occ.slaStatus === 'atrasado'
+                              ? 'SLA Atrasado'
+                              : 'SLA Violado'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               );

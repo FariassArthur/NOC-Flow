@@ -5,6 +5,7 @@ export interface ITemplate extends Document {
   title: string;
   description?: string;
   priority?: string;
+  checklist?: string[];
   category?: string;
   service?: string;
   equipment?: string;
@@ -16,6 +17,7 @@ const TemplateSchema = new Schema<ITemplate>(
     title: { type: String, required: true },
     description: { type: String, trim: true },
     priority: { type: String },
+    checklist: { type: [String], default: [] },
     category: { type: String },
     service: { type: String },
     equipment: { type: String },

@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { occurrenceAPI, reportAPI } from '@ccore/api-client';
+import { occurrenceAPI, reportAPI, dashboardAPI, onCallAPI } from '@ccore/api-client';
 import type { Occurrence } from '@ccore/shared';
-import { STATUS_OPTIONS } from '@ccore/shared';
 import {
   StatusPieChart,
   PriorityBarChart,
@@ -28,13 +27,15 @@ export default function DashboardPage() {
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
-  const [slaSummary, setSlaSummary] = useState<any>(null);
+  const [slaSummary, setSlaSummary] = useState<Record<string, unknown> | null>(null);
+  const [currentOnCall, setCurrentOnCall] = useState<Record<string, unknown> | null>(null);
+  const [_dashboardStats, setDashboardStats] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     occurrenceAPI
       .list({ limit: 1000 })
-      .then((res: any) => {
-        setOccurrences(res.data || res);
+      .then((res) => {
+        setOccurrences(Array.isArray(res) ? res : res.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -42,6 +43,16 @@ export default function DashboardPage() {
     reportAPI
       .summary()
       .then(setSlaSummary)
+      .catch(() => {});
+
+    dashboardAPI
+      .stats()
+      .then(setDashboardStats)
+      .catch(() => {});
+
+    onCallAPI
+      .current()
+      .then(setCurrentOnCall)
       .catch(() => {});
   }, []);
 
@@ -66,7 +77,7 @@ export default function DashboardPage() {
   const recent = filtered.slice(0, 5);
 
   const byUser = filtered.reduce<Record<string, Occurrence[]>>((acc, occ) => {
-    const name = (occ.createdBy as any)?.fullName || 'Desconhecido';
+    const name = (occ.createdBy as { fullName?: string } | undefined)?.fullName || 'Desconhecido';
     if (!acc[name]) acc[name] = [];
     acc[name].push(occ);
     return acc;
@@ -84,7 +95,7 @@ export default function DashboardPage() {
       'Tempo (min)',
     ];
     const rows = filtered.map((o) => {
-      const c = o.createdBy as any;
+      const c = o.createdBy as { fullName?: string; department?: string } | undefined;
       return [
         `"${o.title}"`,
         o.status,
@@ -109,6 +120,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {currentOnCall?.onCall && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-sm text-emerald-300">
+            Plantão ativo: <strong>{currentOnCall.shift.name}</strong> (
+            {currentOnCall.shift.startTime} - {currentOnCall.shift.endTime})
+          </span>
+        </div>
+      )}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
@@ -236,7 +256,9 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3 relative z-10">
               {recent.map((occ) => {
-                const created = occ.createdBy as any;
+                const created = occ.createdBy as
+                  | { fullName?: string; department?: string; _id?: string }
+                  | undefined;
                 return (
                   <Link
                     key={occ._id?.toString()}
@@ -275,7 +297,9 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-4 relative z-10">
               {Object.entries(byUser).map(([name, occs]) => {
-                const user = occs[0].createdBy as any;
+                const user = occs[0].createdBy as
+                  | { fullName?: string; department?: string; cargo?: string }
+                  | undefined;
                 const abertas = occs.filter((o) => o.status === 'aberta').length;
                 const execucao = occs.filter((o) => o.status === 'em_execucao').length;
                 const finalizadas = occs.filter((o) => o.status === 'finalizada').length;

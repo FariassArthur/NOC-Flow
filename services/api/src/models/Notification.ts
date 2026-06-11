@@ -10,7 +10,14 @@ const notificationSchema = new mongoose.Schema<NotificationType>(
     },
     type: {
       type: String,
-      enum: ['new_occurrence', 'status_change', 'assignment', 'comment', 'escalation'],
+      enum: [
+        'new_occurrence',
+        'status_change',
+        'assignment',
+        'comment',
+        'escalation',
+        'scheduled_report',
+      ],
       required: true,
     },
     title: {
@@ -41,11 +48,11 @@ notificationSchema.post('save', function (doc) {
     .catch(() => {});
 });
 
-notificationSchema.post('insertMany', function (docs: any[]) {
+notificationSchema.post('insertMany', function (docs: NotificationType[]) {
   import('../services/socketManager')
     .then(({ emitToUser }) => {
       for (const doc of docs) {
-        emitToUser(doc.recipient, 'notification', doc.toObject());
+        emitToUser(doc.recipient, 'notification', (doc as unknown as mongoose.Document).toObject());
       }
     })
     .catch(() => {});

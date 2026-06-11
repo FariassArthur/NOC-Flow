@@ -14,3 +14,6 @@ export * from './constants';
 
 // Utils
 export * from './utils';
+
+export * from './schemas/oncallSchema';
+export * from './schemas/knowledgeSchema';

@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { occurrenceAPI, authAPI } from '../../lib/api';
+import { occurrenceAPI, authAPI, dashboardAPI, onCallAPI } from '../../lib/api';
 import { statusCount, priorityCount } from '@ccore/shared';
 import StatusBadge from '../../components/StatusBadge';
 import PriorityBadge from '../../components/PriorityBadge';
@@ -33,19 +33,27 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function Dashboard() {
   const router = useRouter();
-  const [occurrences, setOccurrences] = useState<any[]>([]);
-  const [user, setUser] = useState<any>(null);
+  const [occurrences, setOccurrences] = useState<Record<string, unknown>[]>([]);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentOnCall, setCurrentOnCall] = useState<Record<string, unknown> | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<Record<string, unknown> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [occRes, me] = await Promise.all([
+      const [occRes, me, onCall, stats] = await Promise.all([
         occurrenceAPI.list(),
         authAPI.me().catch(() => null),
+        onCallAPI.current().catch(() => null),
+        dashboardAPI.stats().catch(() => null),
       ]);
-      setOccurrences(occRes.data || occRes || []);
+      setOccurrences(
+        ((occRes as Record<string, unknown>).data as Record<string, unknown>[]) || occRes || []
+      );
       setUser(me);
+      setCurrentOnCall(onCall);
+      setDashboardStats(stats);
     } catch {
       /* noop */
     }
@@ -154,6 +162,80 @@ export default function Dashboard() {
           </Text>
         )}
 
+        {/* On-Call banner */}
+        {currentOnCall?.onCall && (
+          <View
+            style={{
+              backgroundColor: '#10b981' + '15',
+              borderRadius: 12,
+              padding: 12,
+              borderWidth: 1,
+              borderColor: '#10b981' + '30',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981' }} />
+            <Text style={{ color: '#6ee7b7', fontSize: 13, flex: 1 }}>
+              Plantão ativo: <Text style={{ fontWeight: '700' }}>{currentOnCall.shift?.name}</Text>{' '}
+              ({currentOnCall.shift?.startTime} - {currentOnCall.shift?.endTime})
+            </Text>
+          </View>
+        )}
+
+        {/* SLA summary */}
+        {dashboardStats?.sla && (
+          <View
+            style={{
+              backgroundColor: '#1e293b',
+              borderRadius: 16,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: '#334155',
+            }}
+          >
+            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>
+              SLA
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              {[
+                { label: 'Dentro', value: dashboardStats.sla.dentro || 0, color: '#10b981' },
+                { label: 'Atrasado', value: dashboardStats.sla.atrasado || 0, color: '#eab308' },
+                { label: 'Violado', value: dashboardStats.sla.violado || 0, color: '#ef4444' },
+              ].map((s) => (
+                <View key={s.label} style={{ alignItems: 'center', flex: 1 }}>
+                  <Text style={{ color: s.color, fontSize: 22, fontWeight: '800' }}>{s.value}</Text>
+                  <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+            {dashboardStats.avgResolutionTimeMinutes != null && (
+              <View
+                style={{
+                  marginTop: 12,
+                  paddingTop: 12,
+                  borderTopWidth: 1,
+                  borderTopColor: '#334155',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ color: '#f97316', fontSize: 18, fontWeight: '800' }}>
+                  {dashboardStats.avgResolutionTimeMinutes > 60
+                    ? `${(dashboardStats.avgResolutionTimeMinutes / 60).toFixed(1)}h`
+                    : `${Math.round(dashboardStats.avgResolutionTimeMinutes)} min`}
+                </Text>
+                <Text
+                  style={{ color: '#94a3b8', fontSize: 13, marginLeft: 8, alignSelf: 'flex-end' }}
+                >
+                  tempo médio
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Stats cards */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {stats.map((s) => (
@@ -259,7 +341,7 @@ export default function Dashboard() {
             <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700' }}>
               Ocorrências Recentes
             </Text>
-            {recent.map((occ: any) => (
+            {recent.map((occ: Record<string, unknown>) => (
               <TouchableOpacity
                 key={occ._id}
                 onPress={() => router.push(`/occurrences/${occ._id}`)}

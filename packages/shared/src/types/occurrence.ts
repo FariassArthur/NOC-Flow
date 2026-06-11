@@ -26,6 +26,14 @@ export interface HistoryEntry {
   changedAt: Date;
 }
 
+export interface ChecklistItem {
+  _id?: string;
+  text: string;
+  done: boolean;
+  doneBy?: string;
+  doneAt?: Date;
+}
+
 export interface Occurrence {
   _id?: string;
 
@@ -58,6 +66,7 @@ export interface Occurrence {
   slaBreachedAt?: Date;
 
   comments: Comment[];
+  checklist?: ChecklistItem[];
   attachments: Attachment[];
   history: HistoryEntry[];
 

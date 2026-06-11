@@ -6,3 +6,6 @@ export * from './audit';
 export * from './runbookExecution';
 export * from './department';
 export * from './template';
+export * from './oncall';
+export * from './knowledge';
+export * from './reportSchedule';

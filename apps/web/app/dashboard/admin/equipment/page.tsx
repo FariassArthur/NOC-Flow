@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { equipmentAPI } from '@ccore/api-client';
 import type { Equipment } from '@ccore/shared';
 
@@ -42,13 +43,13 @@ export default function EquipmentPage() {
     try {
       const data = {
         name: form.name,
-        type: form.type as any,
+        type: form.type as Equipment['type'],
         ip: form.ip || undefined,
         brand: form.brand || undefined,
         equipmentModel: form.equipmentModel || undefined,
         location: form.location || undefined,
         department: form.department || undefined,
-        status: form.status as any,
+        status: form.status as Equipment['status'],
       };
       if (editing) {
         await equipmentAPI.update(editing._id!, data);
@@ -67,8 +68,9 @@ export default function EquipmentPage() {
       });
       setEditing(null);
       load();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao salvar');
+    } catch (err: unknown) {
+      const apiError = err as { response?: { data?: { error?: string } } };
+      setError(apiError.response?.data?.error || 'Erro ao salvar');
     } finally {
       setSaving(false);
     }
@@ -81,7 +83,7 @@ export default function EquipmentPage() {
       type: item.type,
       ip: item.ip || '',
       brand: item.brand || '',
-      equipmentModel: (item as any).equipmentModel || '',
+      equipmentModel: item.equipmentModel || '',
       location: item.location || '',
       department: item.department || '',
       status: item.status,
@@ -248,7 +250,14 @@ export default function EquipmentPage() {
                 key={item._id as string}
                 className="border-b border-slate-700/30 hover:bg-slate-700/20"
               >
-                <td className="py-3 px-4 text-white">{item.name}</td>
+                <td className="py-3 px-4 text-white">
+                  <Link
+                    href={`/dashboard/equipment/${item._id}`}
+                    className="text-white hover:text-accent-500 transition-colors font-medium"
+                  >
+                    {item.name}
+                  </Link>
+                </td>
                 <td className="py-3 px-4 text-slate-300 hidden sm:table-cell">{item.type}</td>
                 <td className="py-3 px-4 text-slate-400 hidden md:table-cell">{item.ip || '-'}</td>
                 <td className="py-3 px-4 text-slate-400 hidden md:table-cell">

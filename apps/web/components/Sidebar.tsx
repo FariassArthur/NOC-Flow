@@ -93,7 +93,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [width, setWidth] = useState(72);
   const [isDragging, setIsDragging] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<Record<string, unknown> | null>(null);
   const sidebarRef = useRef<HTMLElement>(null);
   const dragStartX = useRef(0);
   const startWidth = useRef(72);
@@ -110,10 +110,14 @@ export default function Sidebar() {
 
   const adminSubItems = [
     { href: '/dashboard/admin/users', label: 'Usuários' },
+    { href: '/dashboard/admin/templates', label: 'Templates' },
     { href: '/dashboard/admin/categories', label: 'Categorias' },
     { href: '/dashboard/admin/equipment', label: 'Equipamentos' },
     { href: '/dashboard/admin/services', label: 'Serviços' },
     { href: '/dashboard/admin/escalations', label: 'Escalonamento' },
+    { href: '/dashboard/admin/oncall', label: 'Plantão' },
+    { href: '/dashboard/admin/knowledge', label: 'Conhecimento' },
+    { href: '/dashboard/admin/report-schedules', label: 'Rel. Programados' },
     { href: '/dashboard/admin/audit', label: 'Auditoria' },
   ];
 
@@ -122,6 +126,20 @@ export default function Sidebar() {
     {
       href: '/dashboard/runbooks/executions',
       label: 'Execuções',
+      icon: (
+        <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+          />
+        </svg>
+      ),
+    },
+    {
+      href: '/dashboard/knowledge',
+      label: 'Conhecimento',
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path
