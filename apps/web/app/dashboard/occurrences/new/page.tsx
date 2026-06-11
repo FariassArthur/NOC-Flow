@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { occurrenceAPI, userAPI, categoryAPI, equipmentAPI, serviceAPI } from '@noc/api-client';
+import {
+  occurrenceAPI,
+  userAPI,
+  categoryAPI,
+  equipmentAPI,
+  serviceAPI,
+  templateAPI,
+} from '@ccore/api-client';
 
 const priorities = [
   { value: 'baixa', label: 'Baixa' },
@@ -18,6 +25,8 @@ export default function NewOccurrencePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -34,14 +43,53 @@ export default function NewOccurrencePage() {
 
   useEffect(() => {
     Promise.all([
-      userAPI.list().then(setUsers).catch(() => {}),
-      categoryAPI.list().then(setCategories).catch(() => {}),
-      equipmentAPI.list().then(setEquipment).catch(() => {}),
-      serviceAPI.list().then(setServices).catch(() => {}),
+      userAPI
+        .list()
+        .then(setUsers)
+        .catch(() => {}),
+      categoryAPI
+        .list()
+        .then(setCategories)
+        .catch(() => {}),
+      equipmentAPI
+        .list()
+        .then(setEquipment)
+        .catch(() => {}),
+      serviceAPI
+        .list()
+        .then(setServices)
+        .catch(() => {}),
+      templateAPI
+        .list()
+        .then(setTemplates)
+        .catch(() => {}),
     ]);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    if (!templateId) return;
+    const tmpl = templates.find((t) => t._id === templateId);
+    if (!tmpl) return;
+
+    const cat = categories.find((c: any) => c.name === tmpl.category);
+    const eq = equipment.find((e: any) => e.name === tmpl.equipment);
+    const svc = services.find((s: any) => s.name === tmpl.service);
+
+    setForm((prev) => ({
+      ...prev,
+      title: tmpl.title || prev.title,
+      description: tmpl.description || prev.description,
+      priority: tmpl.priority || prev.priority,
+      category: cat?._id || prev.category,
+      equipment: eq?._id || prev.equipment,
+      service: svc?._id || prev.service,
+    }));
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -72,7 +120,11 @@ export default function NewOccurrencePage() {
 
       router.push(`/dashboard/occurrences/${created._id}`);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.details?.[0]?.message || 'Erro ao criar ocorrência');
+      setError(
+        err.response?.data?.error ||
+          err.response?.data?.details?.[0]?.message ||
+          'Erro ao criar ocorrência'
+      );
     } finally {
       setLoading(false);
     }
@@ -81,12 +133,35 @@ export default function NewOccurrencePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <Link href="/dashboard/occurrences" className="text-sm text-accent-500 hover:text-accent-400 mb-2 inline-block">
+        <Link
+          href="/dashboard/occurrences"
+          className="text-sm text-accent-500 hover:text-accent-400 mb-2 inline-block"
+        >
           &larr; Voltar para Ocorrências
         </Link>
         <h1 className="text-2xl font-bold text-white">Nova Ocorrência</h1>
         <p className="text-slate-400 mt-1">Registre uma nova ocorrência no sistema</p>
       </div>
+
+      {templates.length > 0 && (
+        <div className="card">
+          <label className="block text-sm font-medium text-slate-300 mb-1.5">
+            Template <span className="text-slate-500">(preenche automaticamente)</span>
+          </label>
+          <select
+            value={selectedTemplate}
+            onChange={(e) => handleTemplateSelect(e.target.value)}
+            className="input-field"
+          >
+            <option value="">Sem template</option>
+            {templates.map((t: any) => (
+              <option key={t._id} value={t._id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="card space-y-5">
         {error && (
@@ -131,7 +206,9 @@ export default function NewOccurrencePage() {
               className="input-field"
             >
               {priorities.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
               ))}
             </select>
           </div>
@@ -186,28 +263,49 @@ export default function NewOccurrencePage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Categoria</label>
-            <select name="category" value={form.category} onChange={handleChange} className="input-field">
+            <select
+              name="category"
+              value={form.category}
+              onChange={handleChange}
+              className="input-field"
+            >
               <option value="">Sem categoria</option>
               {categories.map((c: any) => (
-                <option key={c._id} value={c._id}>{c.name}</option>
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Equipamento</label>
-            <select name="equipment" value={form.equipment} onChange={handleChange} className="input-field">
+            <select
+              name="equipment"
+              value={form.equipment}
+              onChange={handleChange}
+              className="input-field"
+            >
               <option value="">Sem equipamento</option>
               {equipment.map((e: any) => (
-                <option key={e._id} value={e._id}>{e.name} ({e.type})</option>
+                <option key={e._id} value={e._id}>
+                  {e.name} ({e.type})
+                </option>
               ))}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Serviço</label>
-            <select name="service" value={form.service} onChange={handleChange} className="input-field">
+            <select
+              name="service"
+              value={form.service}
+              onChange={handleChange}
+              className="input-field"
+            >
               <option value="">Sem serviço</option>
               {services.map((s: any) => (
-                <option key={s._id} value={s._id}>{s.name}</option>
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
               ))}
             </select>
           </div>

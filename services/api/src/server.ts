@@ -6,6 +6,7 @@ import cors from 'cors';
 import path from 'path';
 import { connectDB } from './config';
 import { initSocketIO } from './services/socketManager';
+import { authLimiter, apiLimiter } from './middleware/rateLimiter';
 import authRoutes from './routes/auth';
 import occurrenceRoutes from './routes/occurrences';
 import userRoutes from './routes/users';
@@ -19,19 +20,25 @@ import runbookExecutionRoutes from './routes/runbookExecutions';
 import escalationRoutes from './routes/escalations';
 import auditRoutes from './routes/audit';
 import reportRoutes from './routes/reports';
+import departmentRoutes from './routes/departments';
+import templateRoutes from './routes/templates';
 import { authMiddleware } from './middleware/auth';
 import { startEscalationScheduler } from './services/escalationScheduler';
+import { logger } from './utils/logger';
 
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors({
-  origin: (process.env.CORS_ORIGIN || 'http://localhost:3000').split(','),
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000').split(','),
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use('/api/', apiLimiter);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -51,7 +58,7 @@ app.get('/uploads/:filename', authMiddleware, (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/occurrences', occurrenceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -64,10 +71,12 @@ app.use('/api/runbooks', runbookRoutes);
 app.use('/api/escalations', escalationRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/templates', templateRoutes);
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('[Error]', err?.message || err || 'Unknown error');
+  logger.error('[Error]', err?.message || err || 'Unknown error');
   const status = typeof err?.status === 'number' ? err.status : 500;
   res.status(status).json({ error: 'Erro interno do servidor' });
 });
@@ -78,15 +87,18 @@ const start = async () => {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
     await connectDB();
     initSocketIO(httpServer);
     startEscalationScheduler();
     httpServer.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log(`Socket.IO running on ws://localhost:${PORT}`);
+      logger.info(`Server running on http://localhost:${PORT}`);
+      logger.info(`Socket.IO running on ws://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };

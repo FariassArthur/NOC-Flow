@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { runbookExecutionAPI } from '@noc/api-client';
-import type { RunbookExecution } from '@noc/shared';
+import { runbookExecutionAPI } from '@ccore/api-client';
+import type { RunbookExecution } from '@ccore/shared';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   running: { label: 'Em Execução', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  completed: { label: 'Concluído', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  completed: {
+    label: 'Concluído',
+    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  },
   cancelled: { label: 'Cancelado', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
 };
 
@@ -27,9 +30,13 @@ export default function RunbookExecutionsPage() {
     setLoading(true);
     const params: any = {};
     if (statusFilter) params.status = statusFilter;
-    runbookExecutionAPI.list(params).then((res) => {
-      setExecutions(res.data);
-    }).catch(() => {}).finally(() => setLoading(false));
+    runbookExecutionAPI
+      .list(params)
+      .then((res) => {
+        setExecutions(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [statusFilter]);
 
   return (
@@ -50,7 +57,9 @@ export default function RunbookExecutionsPage() {
             key={s}
             onClick={() => setStatusFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              statusFilter === s ? 'bg-accent-500/20 text-accent-400' : 'bg-slate-700/40 text-slate-400 hover:text-slate-200'
+              statusFilter === s
+                ? 'bg-accent-500/20 text-accent-400'
+                : 'bg-slate-700/40 text-slate-400 hover:text-slate-200'
             }`}
           >
             {s === '' ? 'Todas' : statusConfig[s]?.label || s}
@@ -95,8 +104,8 @@ export default function RunbookExecutionsPage() {
                       step.status === 'in_progress'
                         ? 'bg-amber-500/10 border border-amber-500/20'
                         : step.status === 'completed'
-                        ? 'bg-emerald-500/5 border border-emerald-500/10'
-                        : 'bg-slate-700/20 border border-slate-700/20'
+                          ? 'bg-emerald-500/5 border border-emerald-500/10'
+                          : 'bg-slate-700/20 border border-slate-700/20'
                     }`}
                   >
                     <div
@@ -104,10 +113,10 @@ export default function RunbookExecutionsPage() {
                         step.status === 'completed'
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : step.status === 'in_progress'
-                          ? 'bg-amber-500/20 text-amber-400'
-                          : step.status === 'skipped'
-                          ? 'bg-slate-500/20 text-slate-400'
-                          : 'bg-slate-600/20 text-slate-500'
+                            ? 'bg-amber-500/20 text-amber-400'
+                            : step.status === 'skipped'
+                              ? 'bg-slate-500/20 text-slate-400'
+                              : 'bg-slate-600/20 text-slate-500'
                       }`}
                     >
                       {step.status === 'completed' ? '✓' : step.order + 1}
@@ -116,9 +125,7 @@ export default function RunbookExecutionsPage() {
                       <p className={`text-sm ${stepStatusConfig[step.status] || 'text-slate-300'}`}>
                         {step.description}
                       </p>
-                      {step.notes && (
-                        <p className="text-xs text-slate-500 mt-1">{step.notes}</p>
-                      )}
+                      {step.notes && <p className="text-xs text-slate-500 mt-1">{step.notes}</p>}
                     </div>
                   </div>
                 ))}

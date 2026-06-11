@@ -2,13 +2,19 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { occurrenceAPI } from '@noc/api-client';
-import type { Occurrence, PaginatedResponse } from '@noc/shared';
+import { occurrenceAPI } from '@ccore/api-client';
+import type { Occurrence, PaginatedResponse } from '@ccore/shared';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   aberta: { label: 'Aberta', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
-  em_execucao: { label: 'Em Execução', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  finalizada: { label: 'Finalizada', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  em_execucao: {
+    label: 'Em Execução',
+    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+  },
+  finalizada: {
+    label: 'Finalizada',
+    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  },
 };
 
 const priorityConfig: Record<string, { label: string; color: string }> = {
@@ -36,21 +42,27 @@ export default function OccurrencesPage() {
     if (priorityFilter) params.priority = priorityFilter;
     if (search) params.search = search;
 
-    occurrenceAPI.list(params).then((res) => {
-      const data = res as any;
-      if (data.data) {
-        setOccurrences(data.data);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-      } else {
-        setOccurrences(data);
-        setTotal(data.length);
-        setTotalPages(1);
-      }
-    }).catch(console.error).finally(() => setLoading(false));
+    occurrenceAPI
+      .list(params)
+      .then((res) => {
+        const data = res as any;
+        if (data.data) {
+          setOccurrences(data.data);
+          setTotal(data.total);
+          setTotalPages(data.totalPages);
+        } else {
+          setOccurrences(data);
+          setTotal(data.length);
+          setTotalPages(1);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, [statusFilter, priorityFilter, search, page]);
 
-  useEffect(() => { fetchOccurrences(); }, [fetchOccurrences]);
+  useEffect(() => {
+    fetchOccurrences();
+  }, [fetchOccurrences]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,13 +92,22 @@ export default function OccurrencesPage() {
         />
         <button type="submit" className="btn-primary shrink-0">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
         </button>
         {search && (
           <button
             type="button"
-            onClick={() => { setSearchInput(''); setSearch(''); setPage(1); }}
+            onClick={() => {
+              setSearchInput('');
+              setSearch('');
+              setPage(1);
+            }}
             className="btn-secondary shrink-0"
           >
             Limpar
@@ -97,7 +118,10 @@ export default function OccurrencesPage() {
       <div className="flex gap-3 flex-wrap">
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
           className="input-field w-auto min-w-[160px]"
         >
           <option value="">Todos os status</option>
@@ -108,7 +132,10 @@ export default function OccurrencesPage() {
 
         <select
           value={priorityFilter}
-          onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setPriorityFilter(e.target.value);
+            setPage(1);
+          }}
           className="input-field w-auto min-w-[160px]"
         >
           <option value="">Todas as prioridades</option>
@@ -143,7 +170,9 @@ export default function OccurrencesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="font-semibold text-white truncate">{occ.title}</h3>
-                        <span className={`text-xs font-medium ${priorityConfig[occ.priority]?.color || ''}`}>
+                        <span
+                          className={`text-xs font-medium ${priorityConfig[occ.priority]?.color || ''}`}
+                        >
                           {occ.priority?.toUpperCase()}
                         </span>
                       </div>
@@ -154,7 +183,10 @@ export default function OccurrencesPage() {
                         {occ.tags?.length > 0 && (
                           <div className="flex gap-1">
                             {occ.tags.map((tag) => (
-                              <span key={tag} className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300">
+                              <span
+                                key={tag}
+                                className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-300"
+                              >
                                 {tag}
                               </span>
                             ))}
@@ -162,7 +194,9 @@ export default function OccurrencesPage() {
                         )}
                       </div>
                     </div>
-                    <span className={`badge-status shrink-0 ${statusConfig[occ.status]?.color || ''}`}>
+                    <span
+                      className={`badge-status shrink-0 ${statusConfig[occ.status]?.color || ''}`}
+                    >
                       {statusConfig[occ.status]?.label || occ.status}
                     </span>
                   </div>
@@ -196,7 +230,9 @@ export default function OccurrencesPage() {
                 }
                 return pages.map((p, idx) =>
                   typeof p === 'string' ? (
-                    <span key={`ellipsis-${idx}`} className="text-slate-500 px-1">...</span>
+                    <span key={`ellipsis-${idx}`} className="text-slate-500 px-1">
+                      ...
+                    </span>
                   ) : (
                     <button
                       key={p}

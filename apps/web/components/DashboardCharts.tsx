@@ -1,10 +1,19 @@
 'use client';
 
-import type { Occurrence } from '@noc/shared';
+import type { Occurrence } from '@ccore/shared';
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  LineChart, Line,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LineChart,
+  Line,
 } from 'recharts';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -21,11 +30,13 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 export function StatusPieChart({ data }: { data: Occurrence[] }) {
-  const chartData = Object.entries(STATUS_COLORS).map(([key, color]) => ({
-    name: key === 'em_execucao' ? 'Em Execução' : key.charAt(0).toUpperCase() + key.slice(1),
-    value: data.filter((o) => o.status === key).length,
-    color,
-  })).filter((d) => d.value > 0);
+  const chartData = Object.entries(STATUS_COLORS)
+    .map(([key, color]) => ({
+      name: key === 'em_execucao' ? 'Em Execução' : key.charAt(0).toUpperCase() + key.slice(1),
+      value: data.filter((o) => o.status === key).length,
+      color,
+    }))
+    .filter((d) => d.value > 0);
 
   if (chartData.length === 0) return null;
 
@@ -88,7 +99,12 @@ export function PriorityBarChart({ data }: { data: Occurrence[] }) {
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.3} />
-            <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: '#94a3b8', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
             <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
             <Tooltip
               contentStyle={{
@@ -115,7 +131,8 @@ export function TimelineChart({ data }: { data: Occurrence[] }) {
   const timeline: Record<string, number> = {};
   data.forEach((occ) => {
     const date = new Date(occ.createdAt).toLocaleDateString('pt-BR', {
-      day: '2-digit', month: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
     });
     timeline[date] = (timeline[date] || 0) + 1;
   });
@@ -132,13 +149,25 @@ export function TimelineChart({ data }: { data: Occurrence[] }) {
 
   return (
     <div className="card-glow">
-      <h3 className="text-sm font-semibold text-white mb-4 relative z-10">Ocorrências ao Longo do Tempo</h3>
+      <h3 className="text-sm font-semibold text-white mb-4 relative z-10">
+        Ocorrências ao Longo do Tempo
+      </h3>
       <div className="relative z-10">
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.3} />
-            <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: '#94a3b8', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: '#94a3b8', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              allowDecimals={false}
+            />
             <Tooltip
               contentStyle={{
                 background: '#1e293b',
@@ -163,14 +192,36 @@ export function TimelineChart({ data }: { data: Occurrence[] }) {
   );
 }
 
-export function SLAMetrics({ data }: { data: { slaStats: { dentro: number; atrasado: number; violado: number; semSLA: number }; totalOccurrences: number } }) {
+export function SLAMetrics({
+  data,
+}: {
+  data: {
+    slaStats: { dentro: number; atrasado: number; violado: number; semSLA: number };
+    totalOccurrences: number;
+  };
+}) {
   const { slaStats, totalOccurrences } = data;
   const totalSLA = slaStats.dentro + slaStats.atrasado + slaStats.violado;
 
   const slaData = [
-    { name: 'Dentro do SLA', value: slaStats.dentro, color: '#10b981', percentage: totalSLA > 0 ? Math.round((slaStats.dentro / totalSLA) * 100) : 0 },
-    { name: 'Atrasado', value: slaStats.atrasado, color: '#f59e0b', percentage: totalSLA > 0 ? Math.round((slaStats.atrasado / totalSLA) * 100) : 0 },
-    { name: 'Violado', value: slaStats.violado, color: '#ef4444', percentage: totalSLA > 0 ? Math.round((slaStats.violado / totalSLA) * 100) : 0 },
+    {
+      name: 'Dentro do SLA',
+      value: slaStats.dentro,
+      color: '#10b981',
+      percentage: totalSLA > 0 ? Math.round((slaStats.dentro / totalSLA) * 100) : 0,
+    },
+    {
+      name: 'Atrasado',
+      value: slaStats.atrasado,
+      color: '#f59e0b',
+      percentage: totalSLA > 0 ? Math.round((slaStats.atrasado / totalSLA) * 100) : 0,
+    },
+    {
+      name: 'Violado',
+      value: slaStats.violado,
+      color: '#ef4444',
+      percentage: totalSLA > 0 ? Math.round((slaStats.violado / totalSLA) * 100) : 0,
+    },
   ].filter((d) => d.value > 0);
 
   if (slaData.length === 0) return null;

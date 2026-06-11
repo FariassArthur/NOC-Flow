@@ -1,4 +1,4 @@
-# Schema MongoDB - ProjetoNOC
+# Schema MongoDB - CCore
 
 ## Collections
 
@@ -19,9 +19,10 @@
 ```
 
 **Indices:**
+
 ```javascript
-db.users.createIndex({ email: 1 })
-db.users.createIndex({ createdAt: -1 })
+db.users.createIndex({ email: 1 });
+db.users.createIndex({ createdAt: -1 });
 ```
 
 ---
@@ -83,17 +84,18 @@ db.users.createIndex({ createdAt: -1 })
 ```
 
 **Indices:**
+
 ```javascript
-db.occurrences.createIndex({ status: 1 })
-db.occurrences.createIndex({ assignedTo: 1 })
-db.occurrences.createIndex({ priority: 1 })
-db.occurrences.createIndex({ createdBy: 1 })
-db.occurrences.createIndex({ createdAt: -1 })
-db.occurrences.createIndex({ tags: 1 })
-db.occurrences.createIndex({ dueDate: 1 })
+db.occurrences.createIndex({ status: 1 });
+db.occurrences.createIndex({ assignedTo: 1 });
+db.occurrences.createIndex({ priority: 1 });
+db.occurrences.createIndex({ createdBy: 1 });
+db.occurrences.createIndex({ createdAt: -1 });
+db.occurrences.createIndex({ tags: 1 });
+db.occurrences.createIndex({ dueDate: 1 });
 
 // Compound index para queries comuns
-db.occurrences.createIndex({ status: 1, assignedTo: 1, priority: -1 })
+db.occurrences.createIndex({ status: 1, assignedTo: 1, priority: -1 });
 ```
 
 ## Exemplos de Documentos
@@ -128,7 +130,7 @@ db.occurrences.createIndex({ status: 1, assignedTo: 1, priority: -1 })
   "createdBy": ObjectId("507f1f77bcf86cd799439010"),
   "dueDate": ISODate("2024-01-01T18:00:00.000Z"),
   "timeSpentMinutes": 45,
-  
+
   "comments": [
     {
       "_id": ObjectId("507f1f77bcf86cd799439013"),
@@ -180,31 +182,32 @@ db.occurrences.createIndex({ status: 1, assignedTo: 1, priority: -1 })
 ## Queries Comuns
 
 ### Listar ocorrências abertas
+
 ```javascript
-db.occurrences
-  .find({ status: 'aberta' })
-  .sort({ createdAt: -1 })
-  .limit(20)
+db.occurrences.find({ status: 'aberta' }).sort({ createdAt: -1 }).limit(20);
 ```
 
 ### Ocorrências críticas atribuídas a um usuário
+
 ```javascript
 db.occurrences.find({
   priority: 'crítica',
-  assignedTo: ObjectId("..."),
-  status: { $ne: 'fechada' }
-})
+  assignedTo: ObjectId('...'),
+  status: { $ne: 'fechada' },
+});
 ```
 
 ### Ocorrências vencidas
+
 ```javascript
 db.occurrences.find({
   dueDate: { $lt: new Date() },
-  status: { $ne: 'fechada' }
-})
+  status: { $ne: 'fechada' },
+});
 ```
 
 ### Ocorrências por responsável (agregação)
+
 ```javascript
 db.occurrences.aggregate([
   {
@@ -213,30 +216,33 @@ db.occurrences.aggregate([
       count: { $sum: 1 },
       openCount: {
         $sum: {
-          $cond: [{ $eq: ['$status', 'aberta'] }, 1, 0]
-        }
-      }
-    }
+          $cond: [{ $eq: ['$status', 'aberta'] }, 1, 0],
+        },
+      },
+    },
   },
-  { $lookup: {
+  {
+    $lookup: {
       from: 'users',
       localField: '_id',
       foreignField: '_id',
-      as: 'user'
-    }
-  }
-])
+      as: 'user',
+    },
+  },
+]);
 ```
 
 ## Validações
 
 ### User
+
 - email: Email válido, único
 - password: Min 6 caracteres, hashed
 - fullName: Min 2 caracteres
 - role: Um de [viewer, analyst, admin]
 
 ### Occurrence
+
 - title: Min 1 caractere
 - description: Min 10 caracteres
 - priority: Um de [baixa, média, alta, crítica]
@@ -247,11 +253,13 @@ db.occurrences.aggregate([
 ## Backup & Restore
 
 ### MongoDB Atlas Backup
+
 - Snapshots automáticos a cada 12 horas
 - Retenção: 30 dias para plano free
 - Download manualmente de backups
 
 ### Restore Local
+
 ```bash
 mongorestore --uri="mongodb://..." --archive=backup.archive
 ```
@@ -259,6 +267,7 @@ mongorestore --uri="mongodb://..." --archive=backup.archive
 ## Tamanho Esperado
 
 Para 10.000 ocorrências com média de:
+
 - 5 comentários cada
 - 2 anexos cada
 - 8 históricos cada
@@ -273,18 +282,19 @@ Se integrar com outro sistema:
 // Exemplo: importar de CSV
 db.occurrences.insertMany([
   {
-    title: "...",
-    description: "...",
-    status: "fechada",
-    priority: "baixa",
-    createdBy: ObjectId("..."),
+    title: '...',
+    description: '...',
+    status: 'fechada',
+    priority: 'baixa',
+    createdBy: ObjectId('...'),
     // ...
-  }
-])
+  },
+]);
 ```
 
 ---
 
 **Veja também:**
+
 - [API Documentation](./api.md)
 - [Architecture](./architecture.md)

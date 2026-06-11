@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, userAPI } from '@noc/api-client';
+import { authAPI, userAPI } from '@ccore/api-client';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -28,7 +28,8 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    authAPI.me()
+    authAPI
+      .me()
       .then((u) => {
         setUser(u);
         setForm({
@@ -205,7 +206,9 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirmar nova senha</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Confirmar nova senha
+            </label>
             <input
               type="password"
               name="confirmPassword"

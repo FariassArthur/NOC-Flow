@@ -1,4 +1,4 @@
-# Documentação da API REST - ProjetoNOC
+# Documentação da API REST - CCore
 
 ## Base URL
 

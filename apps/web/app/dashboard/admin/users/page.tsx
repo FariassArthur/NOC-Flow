@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { userAPI, authAPI } from '@noc/api-client';
-import type { UserWithoutPassword } from '@noc/shared';
+import { userAPI, authAPI } from '@ccore/api-client';
+import type { UserWithoutPassword } from '@ccore/shared';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserWithoutPassword[]>([]);
@@ -15,10 +15,7 @@ export default function AdminUsersPage() {
 
   const fetchUsers = () => {
     setLoading(true);
-    Promise.all([
-      userAPI.list(),
-      authAPI.me().catch(() => null),
-    ])
+    Promise.all([userAPI.list(), authAPI.me().catch(() => null)])
       .then(([userList, user]) => {
         setUsers(userList);
         setCurrentUser(user);
@@ -27,7 +24,9 @@ export default function AdminUsersPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const isAdmin = currentUser?.role === 'admin';
 
@@ -118,14 +117,19 @@ export default function AdminUsersPage() {
                 {users.map((user) => {
                   const isEditing = editId === user._id;
                   return (
-                    <tr key={user._id?.toString()} className="border-b border-slate-700/20 hover:bg-slate-700/20 transition-colors">
+                    <tr
+                      key={user._id?.toString()}
+                      className="border-b border-slate-700/20 hover:bg-slate-700/20 transition-colors"
+                    >
                       {isEditing ? (
                         <>
                           <td className="px-4 py-2">
                             <input
                               className="input-field text-sm py-1.5"
                               value={editData.fullName}
-                              onChange={(e) => setEditData((p) => ({ ...p, fullName: e.target.value }))}
+                              onChange={(e) =>
+                                setEditData((p) => ({ ...p, fullName: e.target.value }))
+                              }
                             />
                           </td>
                           <td className="px-4 py-2 text-slate-400">{user.username}</td>
@@ -134,14 +138,18 @@ export default function AdminUsersPage() {
                             <input
                               className="input-field text-sm py-1.5"
                               value={editData.department}
-                              onChange={(e) => setEditData((p) => ({ ...p, department: e.target.value }))}
+                              onChange={(e) =>
+                                setEditData((p) => ({ ...p, department: e.target.value }))
+                              }
                             />
                           </td>
                           <td className="px-4 py-2">
                             <input
                               className="input-field text-sm py-1.5"
                               value={editData.cargo}
-                              onChange={(e) => setEditData((p) => ({ ...p, cargo: e.target.value }))}
+                              onChange={(e) =>
+                                setEditData((p) => ({ ...p, cargo: e.target.value }))
+                              }
                             />
                           </td>
                           <td className="px-4 py-2">
@@ -157,10 +165,17 @@ export default function AdminUsersPage() {
                           </td>
                           <td className="px-4 py-2 text-right">
                             <div className="flex gap-1 justify-end">
-                              <button onClick={saveEdit} disabled={saving} className="px-3 py-1.5 text-xs font-medium bg-accent-500 text-white rounded-lg hover:bg-accent-600 disabled:opacity-50">
+                              <button
+                                onClick={saveEdit}
+                                disabled={saving}
+                                className="px-3 py-1.5 text-xs font-medium bg-accent-500 text-white rounded-lg hover:bg-accent-600 disabled:opacity-50"
+                              >
                                 {saving ? 'Salvando...' : 'Salvar'}
                               </button>
-                              <button onClick={cancelEdit} className="px-3 py-1.5 text-xs font-medium bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600">
+                              <button
+                                onClick={cancelEdit}
+                                className="px-3 py-1.5 text-xs font-medium bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600"
+                              >
                                 Cancelar
                               </button>
                             </div>
@@ -178,7 +193,11 @@ export default function AdminUsersPage() {
                           </td>
                           <td className="px-4 py-3 text-slate-300">{user.cargo}</td>
                           <td className="px-4 py-3 text-slate-300">
-                            {user.role === 'admin' ? 'Administrador' : user.role === 'analyst' ? 'Analista' : 'Visualizador'}
+                            {user.role === 'admin'
+                              ? 'Administrador'
+                              : user.role === 'analyst'
+                                ? 'Analista'
+                                : 'Visualizador'}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex gap-1 justify-end">

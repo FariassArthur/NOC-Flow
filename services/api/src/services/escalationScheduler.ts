@@ -2,6 +2,7 @@ import { EscalationRule } from '../models/EscalationRule';
 import { Occurrence } from '../models/Occurrence';
 import { Notification } from '../models/Notification';
 import { AuditLog } from '../models/AuditLog';
+import { logger } from '../utils/logger';
 
 const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 let intervalHandle: ReturnType<typeof setInterval> | null = null;
@@ -76,6 +77,6 @@ const runEscalationCheck = async () => {
       }
     }
   } catch (error) {
-    console.error('[EscalationScheduler] Error:', error);
+    logger.error('[EscalationScheduler] Error:', error);
   }
 };

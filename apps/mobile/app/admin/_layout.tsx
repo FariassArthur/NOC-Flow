@@ -10,11 +10,14 @@ export default function AdminLayout() {
         headerBackTitle: 'Voltar',
       }}
     >
-      <Stack.Screen name="users" options={{ title: 'Administrar Usuários' }} />
+      <Stack.Screen name="index" options={{ title: 'Administração' }} />
+      <Stack.Screen name="users" options={{ title: 'Usuários' }} />
       <Stack.Screen name="categories" options={{ title: 'Categorias' }} />
       <Stack.Screen name="equipment" options={{ title: 'Equipamentos' }} />
       <Stack.Screen name="services" options={{ title: 'Serviços' }} />
       <Stack.Screen name="escalations" options={{ title: 'Escalações' }} />
+      <Stack.Screen name="templates" options={{ title: 'Templates' }} />
+      <Stack.Screen name="departments" options={{ title: 'Setores' }} />
     </Stack>
   );
 }

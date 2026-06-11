@@ -1,4 +1,4 @@
-# 🚀 Quick Start - ProjetoNOC
+# 🚀 Quick Start - CCore
 
 ## 30 segundos para começar
 
@@ -25,11 +25,11 @@ pnpm dev
 
 ## Qual é qual?
 
-| Projeto | Porta | Comando | Usar para |
-|---------|-------|---------|-----------|
-| Web (Next.js) | 3000 | `pnpm --filter=@noc/web dev` | Interface web |
-| API (Express) | 3001 | `pnpm --filter=@noc/api dev` | Backend |
-| Mobile (Expo) | 19000 | `pnpm --filter=@noc/mobile start` | App mobile |
+| Projeto       | Porta | Comando                             | Usar para     |
+| ------------- | ----- | ----------------------------------- | ------------- |
+| Web (Next.js) | 3000  | `pnpm --filter=@ccore/web dev`      | Interface web |
+| API (Express) | 3001  | `pnpm --filter=@ccore/api dev`      | Backend       |
+| Mobile (Expo) | 19000 | `pnpm --filter=@ccore/mobile start` | App mobile    |
 
 ## Primeiros passos no app
 
@@ -62,7 +62,7 @@ pnpm dev
 ## Estrutura de pasta
 
 ```
-ProjetoNOC/
+CCore/
 ├── apps/web/          ← Seu site
 ├── apps/mobile/       ← Seu app de celular
 ├── services/api/      ← Seu servidor
@@ -77,13 +77,13 @@ ProjetoNOC/
 pnpm dev
 
 # Só web
-pnpm --filter=@noc/web dev
+pnpm --filter=@ccore/web dev
 
 # Só API
-pnpm --filter=@noc/api dev
+pnpm --filter=@ccore/api dev
 
 # Só mobile
-pnpm --filter=@noc/mobile start
+pnpm --filter=@ccore/mobile start
 
 # Type checking (verifica erros TypeScript)
 pnpm type-check
@@ -98,22 +98,27 @@ pnpm build
 ## Problemas comuns
 
 ### "Porta 3001 em uso"
+
 Mudança em `services/api/.env.local`:
+
 ```env
 PORT=3002
 ```
 
 ### "MongoDB connection failed"
+
 - Verifica MONGODB_URI em `services/api/.env.local`
 - Copia corretamente do MongoDB Atlas
 - Adiciona teu IP na whitelist: https://docs.mongodb.com/manual/reference/security-network-access/
 
 ### "pnpm command not found"
+
 ```bash
 npm install -g pnpm
 ```
 
-### "Cannot find module '@noc/shared'"
+### "Cannot find module '@ccore/shared'"
+
 ```bash
 # Reinstala
 pnpm install

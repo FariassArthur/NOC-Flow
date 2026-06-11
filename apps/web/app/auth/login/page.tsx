@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI } from '@noc/api-client';
+import { authAPI } from '@ccore/api-client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white">
-            <span className="text-accent-500">Projeto</span>NOC
+            CCore
           </Link>
           <p className="text-slate-400 mt-2">Faça login no sistema</p>
         </div>
@@ -45,7 +45,9 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email ou Usuário</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Email ou Usuário
+            </label>
             <input
               type="text"
               value={login}
@@ -68,11 +70,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
 

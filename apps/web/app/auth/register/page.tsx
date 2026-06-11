@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI } from '@noc/api-client';
+import { authAPI } from '@ccore/api-client';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -21,13 +21,13 @@ export default function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     // Prevenir entrada de NOC no campo de departamento
     if (name === 'department' && value.toUpperCase() === 'NOC') {
       setError('O setor NOC só pode ser criado por um administrador');
       return;
     }
-    
+
     setError('');
     setForm({ ...form, [name]: value });
   };
@@ -35,13 +35,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     // Validação adicional no frontend
     if (form.department.toUpperCase() === 'NOC') {
       setError('O setor NOC só pode ser criado por um administrador');
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -59,7 +59,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-white">
-            <span className="text-accent-500">Projeto</span>NOC
+            CCore
           </Link>
           <p className="text-slate-400 mt-2">Crie sua conta</p>
         </div>
@@ -73,7 +73,10 @@ export default function RegisterPage() {
 
           <div className="bg-blue-500/10 border border-blue-500/30 text-blue-300 px-4 py-3 rounded-lg text-sm">
             <p className="font-semibold mb-1">ℹ️ Informação importante</p>
-            <p>O setor NOC é reservado para administradores. Se você é um membro NOC, entre em contato com um administrador.</p>
+            <p>
+              O setor NOC é reservado para administradores. Se você é um membro NOC, entre em
+              contato com um administrador.
+            </p>
           </div>
 
           <div>
@@ -130,11 +133,15 @@ export default function RegisterPage() {
               placeholder="Ex: Redes, Segurança, Suporte"
               required
             />
-            <p className="text-xs text-slate-400 mt-1">Exemplos: Redes, Segurança, Suporte, Infraestrutura</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Exemplos: Redes, Segurança, Suporte, Infraestrutura
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Cargo / Função</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Cargo / Função
+            </label>
             <input
               type="text"
               name="cargo"
@@ -161,11 +168,7 @@ export default function RegisterPage() {
             <p className="text-xs text-slate-400 mt-1">Deve conter maiúscula, minúscula e número</p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full py-3"
-          >
+          <button type="submit" disabled={loading} className="btn-primary w-full py-3">
             {loading ? 'Cadastrando...' : 'Cadastrar'}
           </button>
 

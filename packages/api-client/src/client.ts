@@ -1,32 +1,59 @@
 import axios, { AxiosInstance } from 'axios';
 
-class APIClient {
-  private client: AxiosInstance;
+export interface StorageAdapter {
+  getToken(): string | null;
+  setToken(token: string): void;
+  clearToken(): void;
+}
 
-  constructor(baseURL: string = '') {
+const defaultStorage: StorageAdapter = {
+  getToken() {
+    try {
+      return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    } catch {
+      return null;
+    }
+  },
+  setToken(token: string) {
+    try {
+      if (typeof window !== 'undefined') localStorage.setItem('token', token);
+    } catch {
+      /* noop */
+    }
+  },
+  clearToken() {
+    try {
+      if (typeof window !== 'undefined') localStorage.removeItem('token');
+    } catch {
+      /* noop */
+    }
+  },
+};
+
+export class APIClient {
+  private client: AxiosInstance;
+  private storage: StorageAdapter;
+
+  constructor(baseURL: string = '', storage: StorageAdapter = defaultStorage) {
+    this.storage = storage;
     this.client = axios.create({
       baseURL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
-    // Add token to every request if it exists
     this.client.interceptors.request.use((config) => {
-      const token = this.getToken();
+      const token = this.storage.getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;
     });
 
-    // Handle unauthorized responses
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          this.clearToken();
-          // Trigger logout event
+          this.storage.clearToken();
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('unauthorized'));
           }
@@ -36,34 +63,8 @@ class APIClient {
     );
   }
 
-  private getToken(): string | null {
-    try {
-      return typeof window !== 'undefined'
-        ? localStorage.getItem('token')
-        : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private clearToken(): void {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
   setToken(token: string): void {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', token);
-      }
-    } catch {
-      // Ignore
-    }
+    this.storage.setToken(token);
   }
 
   get instance() {
@@ -72,7 +73,9 @@ class APIClient {
 }
 
 const apiUrl =
-  (typeof process !== 'undefined' && process.env && (process.env.NEXT_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL)) ||
+  (typeof process !== 'undefined' &&
+    process.env &&
+    (process.env.NEXT_PUBLIC_API_URL || process.env.EXPO_PUBLIC_API_URL)) ||
   undefined;
 
 export const apiClient = new APIClient(apiUrl);

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import type { User } from '@noc/shared';
+import type { User } from '@ccore/shared';
 
 export interface AuthRequest extends Request {
   userId?: string;

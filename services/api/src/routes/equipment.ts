@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
+import { checkPermission } from '../middleware/permissions';
 import { validateBody } from '../middleware/validation';
-import { equipmentSchema } from '@noc/shared';
+import { equipmentSchema } from '@ccore/shared';
 import {
   listEquipment,
   getEquipment,
@@ -16,8 +16,13 @@ router.use(authMiddleware);
 
 router.get('/', listEquipment);
 router.get('/:id', getEquipment);
-router.post('/', authorize('admin', 'analyst'), validateBody(equipmentSchema), createEquipment);
-router.put('/:id', authorize('admin', 'analyst'), validateBody(equipmentSchema.partial()), updateEquipment);
-router.delete('/:id', authorize('admin'), deleteEquipment);
+router.post('/', checkPermission('equipment'), validateBody(equipmentSchema), createEquipment);
+router.put(
+  '/:id',
+  checkPermission('equipment'),
+  validateBody(equipmentSchema.partial()),
+  updateEquipment
+);
+router.delete('/:id', checkPermission('equipment'), deleteEquipment);
 
 export default router;

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
+import { checkPermission } from '../middleware/permissions';
 import { validateBody } from '../middleware/validation';
-import { escalationRuleSchema } from '@noc/shared';
+import { escalationRuleSchema } from '@ccore/shared';
 import {
   listEscalationRules,
   getEscalationRule,
@@ -16,8 +16,18 @@ router.use(authMiddleware);
 
 router.get('/', listEscalationRules);
 router.get('/:id', getEscalationRule);
-router.post('/', authorize('admin', 'analyst'), validateBody(escalationRuleSchema), createEscalationRule);
-router.put('/:id', authorize('admin', 'analyst'), validateBody(escalationRuleSchema.partial()), updateEscalationRule);
-router.delete('/:id', authorize('admin'), deleteEscalationRule);
+router.post(
+  '/',
+  checkPermission('escalations'),
+  validateBody(escalationRuleSchema),
+  createEscalationRule
+);
+router.put(
+  '/:id',
+  checkPermission('escalations'),
+  validateBody(escalationRuleSchema.partial()),
+  updateEscalationRule
+);
+router.delete('/:id', checkPermission('escalations'), deleteEscalationRule);
 
 export default router;

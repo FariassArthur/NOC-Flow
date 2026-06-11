@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { Occurrence } from '../models/Occurrence';
 import { User } from '../models/User';
 import type { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 import PDFDocument from 'pdfkit';
 
 export const exportCSV = async (req: AuthRequest, res: Response) => {
@@ -31,10 +32,19 @@ export const exportCSV = async (req: AuthRequest, res: Response) => {
       .lean();
 
     const headers = [
-      'ID', 'Título', 'Status', 'Prioridade', 'Categoria',
-      'Criado por', 'Departamento', 'Responsável',
-      'Criado em', 'Resolvido em', 'Tempo (min)',
-      'Resolução', 'Causa Raiz',
+      'ID',
+      'Título',
+      'Status',
+      'Prioridade',
+      'Categoria',
+      'Criado por',
+      'Departamento',
+      'Responsável',
+      'Criado em',
+      'Resolvido em',
+      'Tempo (min)',
+      'Resolução',
+      'Causa Raiz',
     ];
 
     const rows = occurrences.map((o: any) => [
@@ -53,17 +63,14 @@ export const exportCSV = async (req: AuthRequest, res: Response) => {
       `"${o.rca?.causaRaiz || ''}"`,
     ]);
 
-    const csv = [
-      headers.join(','),
-      ...rows.map((r: string[]) => r.join(',')),
-    ].join('\n');
+    const csv = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
 
     const filename = `relatorio-ocorrencias-${new Date().toISOString().slice(0, 10)}.csv`;
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send('\uFEFF' + csv);
   } catch (error: any) {
-    console.error('[exportCSV]', error.message);
+    logger.error('[exportCSV]', error.message);
     res.status(400).json({ error: 'Erro ao exportar relatório' });
   }
 };
@@ -110,10 +117,7 @@ export const reportSummary = async (req: AuthRequest, res: Response) => {
         {
           $project: {
             resolutionTime: {
-              $divide: [
-                { $subtract: ['$resolvidoEm', '$createdAt'] },
-                60000,
-              ],
+              $divide: [{ $subtract: ['$resolvidoEm', '$createdAt'] }, 60000],
             },
           },
         },
@@ -154,14 +158,13 @@ export const reportSummary = async (req: AuthRequest, res: Response) => {
       slaStats: slaStats[0] || { dentro: 0, atrasado: 0, violado: 0, semSLA: 0 },
     });
   } catch (error: any) {
-    console.error('[reportSummary]', error.message);
+    logger.error('[reportSummary]', error.message);
     res.status(400).json({ error: 'Erro ao gerar resumo do relatório' });
   }
 };
 
 export const exportPDF = async (req: AuthRequest, res: Response) => {
   try {
-
     const { from, to } = req.query;
     const dateFilter: any = {};
     if (from) dateFilter.createdAt = { $gte: new Date(from as string) };
@@ -186,11 +189,16 @@ export const exportPDF = async (req: AuthRequest, res: Response) => {
     doc.pipe(res);
 
     doc.fontSize(20).font('Helvetica-Bold').text('Relatório de Ocorrências', { align: 'center' });
-    doc.fontSize(10).font('Helvetica').text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
+    doc
+      .fontSize(10)
+      .font('Helvetica')
+      .text(`Gerado em ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
     doc.moveDown();
 
     if (from || to) {
-      doc.fontSize(9).fillColor('#666')
+      doc
+        .fontSize(9)
+        .fillColor('#666')
         .text(`Período: ${from || 'início'} até ${to || 'hoje'}`)
         .fillColor('#000');
     }
@@ -217,15 +225,19 @@ export const exportPDF = async (req: AuthRequest, res: Response) => {
       if (y > 700) doc.addPage();
 
       doc.font('Helvetica-Bold').text(o.title || 'Sem título');
-      doc.font('Helvetica').fillColor('#666')
-        .text(`Status: ${o.status} | Prioridade: ${o.priority} | Criado por: ${o.createdBy?.fullName || 'N/A'}`)
+      doc
+        .font('Helvetica')
+        .fillColor('#666')
+        .text(
+          `Status: ${o.status} | Prioridade: ${o.priority} | Criado por: ${o.createdBy?.fullName || 'N/A'}`
+        )
         .fillColor('#000');
       doc.moveDown(0.5);
     }
 
     doc.end();
   } catch (error: any) {
-    console.error('[exportPDF]', error.message);
+    logger.error('[exportPDF]', error.message);
     if (!res.headersSent) {
       res.status(400).json({ error: 'Erro ao gerar PDF' });
     }

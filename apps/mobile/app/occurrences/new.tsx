@@ -1,7 +1,23 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, FlatList, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+} from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { occurrenceAPI, userAPI, categoryAPI, equipmentAPI, serviceAPI } from '../../lib/api';
+import {
+  occurrenceAPI,
+  userAPI,
+  categoryAPI,
+  equipmentAPI,
+  serviceAPI,
+  templateAPI,
+} from '../../lib/api';
 
 const priorities = [
   { value: 'baixa', label: 'Baixa' },
@@ -32,27 +48,80 @@ export default function NewOccurrence() {
   const [showCatPicker, setShowCatPicker] = useState(false);
   const [showEquipPicker, setShowEquipPicker] = useState(false);
   const [showServicePicker, setShowServicePicker] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   useEffect(() => {
     Promise.all([
-      userAPI.list().then(setUsers).catch(() => {}),
-      categoryAPI.list().then(setCategories).catch(() => {}),
-      equipmentAPI.list().then(setEquipment).catch(() => {}),
-      serviceAPI.list().then(setServices).catch(() => {}),
+      userAPI
+        .list()
+        .then(setUsers)
+        .catch(() => {}),
+      categoryAPI
+        .list()
+        .then(setCategories)
+        .catch(() => {}),
+      equipmentAPI
+        .list()
+        .then(setEquipment)
+        .catch(() => {}),
+      serviceAPI
+        .list()
+        .then(setServices)
+        .catch(() => {}),
+      templateAPI
+        .list()
+        .then(setTemplates)
+        .catch(() => {}),
     ]);
   }, []);
 
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const tmpl = templates.find((t) => t._id === templateId);
+    if (!tmpl) return;
+
+    const cat = categories.find((c: any) => c.name === tmpl.category);
+    const eq = equipment.find((e: any) => e.name === tmpl.equipment);
+    const svc = services.find((s: any) => s.name === tmpl.service);
+
+    if (tmpl.title) setTitle(tmpl.title);
+    if (tmpl.description) setDescription(tmpl.description);
+    if (tmpl.priority) setPriority(tmpl.priority);
+    if (cat) setSelectedCategory(cat._id);
+    if (eq) setSelectedEquipment(eq._id);
+    if (svc) setSelectedService(svc._id);
+  };
+
   const handleSubmit = async () => {
-    if (!title || !description) { setError('Preencha título e descrição'); return; }
+    if (!title || !description) {
+      setError('Preencha título e descrição');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
-      const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean);
-      const payload: any = { title, description, priority, tags: tagList, status: 'aberta', timeSpentMinutes: 0 };
+      const tagList = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const payload: any = {
+        title,
+        description,
+        priority,
+        tags: tagList,
+        status: 'aberta',
+        timeSpentMinutes: 0,
+      };
       if (assignedTo) payload.assignedTo = assignedTo;
       if (dueDate) {
         const parsed = new Date(dueDate);
-        if (isNaN(parsed.getTime())) { setError('Data inválida'); setLoading(false); return; }
+        if (isNaN(parsed.getTime())) {
+          setError('Data inválida');
+          setLoading(false);
+          return;
+        }
         payload.dueDate = parsed.toISOString();
       }
       if (selectedCategory) payload.category = selectedCategory;
@@ -61,15 +130,33 @@ export default function NewOccurrence() {
       const created = await occurrenceAPI.create(payload);
       router.replace(`/occurrences/${created._id}`);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.details?.[0]?.message || 'Erro ao criar');
-    } finally { setLoading(false); }
+      setError(
+        err.response?.data?.error || err.response?.data?.details?.[0]?.message || 'Erro ao criar'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const inputStyle = { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, color: '#f1f5f9', fontSize: 14, borderWidth: 1, borderColor: '#334155' };
+  const inputStyle = {
+    backgroundColor: '#0f172a',
+    borderRadius: 12,
+    padding: 14,
+    color: '#f1f5f9',
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+  };
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Nova Ocorrência', headerStyle: { backgroundColor: '#1e293b' }, headerTintColor: '#f1f5f9' }} />
+      <Stack.Screen
+        options={{
+          title: 'Nova Ocorrência',
+          headerStyle: { backgroundColor: '#1e293b' },
+          headerTintColor: '#f1f5f9',
+        }}
+      />
       <ScrollView style={{ flex: 1, backgroundColor: '#0f172a' }}>
         <View style={{ padding: 16, gap: 16 }}>
           {error ? (
@@ -78,67 +165,220 @@ export default function NewOccurrence() {
             </View>
           ) : null}
 
+          {templates.length > 0 && (
+            <View>
+              <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+                Template <Text style={{ color: '#64748b' }}>(preenche automaticamente)</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowTemplatePicker(true)}
+                style={[
+                  inputStyle,
+                  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+                ]}
+              >
+                <Text style={{ color: selectedTemplate ? '#f1f5f9' : '#64748b' }}>
+                  {templates.find((t) => t._id === selectedTemplate)?.name ||
+                    'Selecionar template...'}
+                </Text>
+                <Text style={{ color: '#64748b' }}>▼</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Título *</Text>
-            <TextInput value={title} onChangeText={setTitle} placeholder="Ex: Queda de link principal" placeholderTextColor="#64748b" style={inputStyle} />
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Título *
+            </Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Ex: Queda de link principal"
+              placeholderTextColor="#64748b"
+              style={inputStyle}
+            />
           </View>
 
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Descrição *</Text>
-            <TextInput value={description} onChangeText={setDescription} placeholder="Descreva detalhadamente..." placeholderTextColor="#64748b" multiline style={[inputStyle, { minHeight: 120, textAlignVertical: 'top' }]} />
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Descrição *
+            </Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Descreva detalhadamente..."
+              placeholderTextColor="#64748b"
+              multiline
+              style={[inputStyle, { minHeight: 120, textAlignVertical: 'top' }]}
+            />
           </View>
 
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Prioridade</Text>
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Prioridade
+            </Text>
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
               {priorities.map((p) => (
                 <TouchableOpacity
                   key={p.value}
                   onPress={() => setPriority(p.value)}
                   style={{
-                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
+                    paddingHorizontal: 16,
+                    paddingVertical: 10,
+                    borderRadius: 10,
                     backgroundColor: priority === p.value ? '#f97316' : '#1e293b',
-                    borderWidth: 1, borderColor: priority === p.value ? '#f97316' : '#334155',
+                    borderWidth: 1,
+                    borderColor: priority === p.value ? '#f97316' : '#334155',
                   }}
                 >
-                  <Text style={{ color: priority === p.value ? '#fff' : '#94a3b8', fontWeight: '600', fontSize: 13 }}>{p.label}</Text>
+                  <Text
+                    style={{
+                      color: priority === p.value ? '#fff' : '#94a3b8',
+                      fontWeight: '600',
+                      fontSize: 13,
+                    }}
+                  >
+                    {p.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Responsável</Text>
-            <TouchableOpacity onPress={() => setShowUserPicker(true)} style={[inputStyle, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-              <Text style={{ color: assignedName ? '#f1f5f9' : '#64748b' }}>{assignedName || 'Selecionar responsável...'}</Text>
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Responsável
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowUserPicker(true)}
+              style={[
+                inputStyle,
+                { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+              ]}
+            >
+              <Text style={{ color: assignedName ? '#f1f5f9' : '#64748b' }}>
+                {assignedName || 'Selecionar responsável...'}
+              </Text>
               <Text style={{ color: '#64748b' }}>▼</Text>
             </TouchableOpacity>
           </View>
 
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Prazo <Text style={{ color: '#64748b' }}>(YYYY-MM-DD)</Text></Text>
-            <TextInput value={dueDate} onChangeText={setDueDate} placeholder="Ex: 2026-06-15" placeholderTextColor="#64748b" style={inputStyle} />
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Prazo <Text style={{ color: '#64748b' }}>(YYYY-MM-DD)</Text>
+            </Text>
+            <TextInput
+              value={dueDate}
+              onChangeText={setDueDate}
+              placeholder="Ex: 2026-06-15"
+              placeholderTextColor="#64748b"
+              style={inputStyle}
+            />
           </View>
 
           <View>
-            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>Tags <Text style={{ color: '#64748b' }}>(separadas por vírgula)</Text></Text>
-            <TextInput value={tags} onChangeText={setTags} placeholder="Ex: rede, link, urgente" placeholderTextColor="#64748b" style={inputStyle} />
+            <Text style={{ color: '#cbd5e1', fontSize: 13, fontWeight: '500', marginBottom: 6 }}>
+              Tags <Text style={{ color: '#64748b' }}>(separadas por vírgula)</Text>
+            </Text>
+            <TextInput
+              value={tags}
+              onChangeText={setTags}
+              placeholder="Ex: rede, link, urgente"
+              placeholderTextColor="#64748b"
+              style={inputStyle}
+            />
           </View>
 
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={loading}
-            style={{ backgroundColor: '#f97316', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8, opacity: loading ? 0.5 : 1 }}
+            style={{
+              backgroundColor: '#f97316',
+              borderRadius: 12,
+              padding: 16,
+              alignItems: 'center',
+              marginTop: 8,
+              opacity: loading ? 0.5 : 1,
+            }}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>Criar Ocorrência</Text>}
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                Criar Ocorrência
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
 
+      <Modal visible={showTemplatePicker} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'center',
+            padding: 32,
+          }}
+        >
+          <View
+            style={{ backgroundColor: '#1e293b', borderRadius: 16, maxHeight: 400, padding: 16 }}
+          >
+            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 16, marginBottom: 12 }}>
+              Selecionar Template
+            </Text>
+            <FlatList
+              data={[{ _id: '', name: 'Nenhum' }, ...templates]}
+              keyExtractor={(item) => item._id || 'none'}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    handleTemplateSelect(item._id);
+                    setShowTemplatePicker(false);
+                  }}
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#334155',
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: item._id === selectedTemplate ? '#f97316' : '#f1f5f9',
+                      fontWeight: item._id === selectedTemplate ? '700' : '400',
+                    }}
+                  >
+                    {item.name}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity
+              onPress={() => setShowTemplatePicker(false)}
+              style={{ marginTop: 12, alignItems: 'center', padding: 10 }}
+            >
+              <Text style={{ color: '#f97316', fontWeight: '600' }}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={showUserPicker} transparent animationType="fade">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 32 }}>
-          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, maxHeight: 400, padding: 16 }}>
-            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 16, marginBottom: 12 }}>Selecionar Responsável</Text>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'center',
+            padding: 32,
+          }}
+        >
+          <View
+            style={{ backgroundColor: '#1e293b', borderRadius: 16, maxHeight: 400, padding: 16 }}
+          >
+            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 16, marginBottom: 12 }}>
+              Selecionar Responsável
+            </Text>
             <FlatList
               data={[{ _id: '', fullName: 'Nenhum' }, ...users]}
               keyExtractor={(item) => item._id || 'none'}
@@ -149,14 +389,33 @@ export default function NewOccurrence() {
                     setAssignedName(item.fullName || '');
                     setShowUserPicker(false);
                   }}
-                  style={{ paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#334155' }}
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 8,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#334155',
+                  }}
                 >
-                  <Text style={{ color: item._id === assignedTo ? '#f97316' : '#f1f5f9', fontWeight: item._id === assignedTo ? '700' : '400' }}>{item.fullName}</Text>
-                  {item.department ? <Text style={{ color: '#64748b', fontSize: 12 }}>{item.department} - {item.cargo}</Text> : null}
+                  <Text
+                    style={{
+                      color: item._id === assignedTo ? '#f97316' : '#f1f5f9',
+                      fontWeight: item._id === assignedTo ? '700' : '400',
+                    }}
+                  >
+                    {item.fullName}
+                  </Text>
+                  {item.department ? (
+                    <Text style={{ color: '#64748b', fontSize: 12 }}>
+                      {item.department} - {item.cargo}
+                    </Text>
+                  ) : null}
                 </TouchableOpacity>
               )}
             />
-            <TouchableOpacity onPress={() => setShowUserPicker(false)} style={{ marginTop: 12, alignItems: 'center', padding: 10 }}>
+            <TouchableOpacity
+              onPress={() => setShowUserPicker(false)}
+              style={{ marginTop: 12, alignItems: 'center', padding: 10 }}
+            >
               <Text style={{ color: '#f97316', fontWeight: '600' }}>Cancelar</Text>
             </TouchableOpacity>
           </View>

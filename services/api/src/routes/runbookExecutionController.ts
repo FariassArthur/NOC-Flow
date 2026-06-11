@@ -3,6 +3,7 @@ import { Runbook } from '../models/Runbook';
 import { RunbookExecution } from '../models/RunbookExecution';
 import { User } from '../models/User';
 import type { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 export const startExecution = async (req: AuthRequest, res: Response) => {
   try {
@@ -31,7 +32,7 @@ export const startExecution = async (req: AuthRequest, res: Response) => {
     const populated = await execution.populate('runbookId', 'title');
     res.status(201).json(populated);
   } catch (error: any) {
-    console.error('[startExecution]', error.message);
+    logger.error('[startExecution]', error.message);
     res.status(400).json({ error: 'Erro ao iniciar execução' });
   }
 };
@@ -66,7 +67,7 @@ export const completeStep = async (req: AuthRequest, res: Response) => {
     await execution.save();
     res.json(execution);
   } catch (error: any) {
-    console.error('[completeStep]', error.message);
+    logger.error('[completeStep]', error.message);
     res.status(400).json({ error: 'Erro ao atualizar passo' });
   }
 };
@@ -84,7 +85,7 @@ export const cancelExecution = async (req: AuthRequest, res: Response) => {
     await execution.save();
     res.json(execution);
   } catch (error: any) {
-    console.error('[cancelExecution]', error.message);
+    logger.error('[cancelExecution]', error.message);
     res.status(400).json({ error: 'Erro ao cancelar execução' });
   }
 };
@@ -95,7 +96,7 @@ export const getExecution = async (req: AuthRequest, res: Response) => {
     if (!execution) return res.status(404).json({ error: 'Execução não encontrada' });
     res.json(execution);
   } catch (error: any) {
-    console.error('[getExecution]', error.message);
+    logger.error('[getExecution]', error.message);
     res.status(400).json({ error: 'Erro ao buscar execução' });
   }
 };
@@ -114,10 +115,7 @@ export const listExecutions = async (req: AuthRequest, res: Response) => {
     const skip = (pageNum - 1) * limitNum;
 
     const [executions, total] = await Promise.all([
-      RunbookExecution.find(filter)
-        .sort({ startedAt: -1 })
-        .skip(skip)
-        .limit(limitNum),
+      RunbookExecution.find(filter).sort({ startedAt: -1 }).skip(skip).limit(limitNum),
       RunbookExecution.countDocuments(filter),
     ]);
 
@@ -128,7 +126,7 @@ export const listExecutions = async (req: AuthRequest, res: Response) => {
       totalPages: Math.ceil(total / limitNum),
     });
   } catch (error: any) {
-    console.error('[listExecutions]', error.message);
+    logger.error('[listExecutions]', error.message);
     res.status(400).json({ error: 'Erro ao listar execuções' });
   }
 };

@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
-import type { Occurrence as OccurrenceType } from '@noc/shared';
+import type { Occurrence as OccurrenceType } from '@ccore/shared';
 
-type OccurrenceSchema = Omit<OccurrenceType, 'createdBy' | 'assignedTo' | 'resolvidoPor' | 'category' | 'equipment' | 'service'> & {
+type OccurrenceSchema = Omit<
+  OccurrenceType,
+  'createdBy' | 'assignedTo' | 'resolvidoPor' | 'category' | 'equipment' | 'service'
+> & {
   createdBy: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId;
   resolvidoPor?: mongoose.Types.ObjectId;

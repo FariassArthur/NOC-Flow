@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { notificationAPI } from '@noc/api-client';
-import type { Notification } from '@noc/shared';
+import { notificationAPI } from '@ccore/api-client';
+import type { Notification } from '@ccore/shared';
 import Link from 'next/link';
 import { io, Socket } from 'socket.io-client';
 
@@ -21,17 +21,32 @@ const typeIcons: Record<string, React.ReactNode> = {
   ),
   status_change: (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+      />
     </svg>
   ),
   assignment: (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
     </svg>
   ),
   comment: (
     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
     </svg>
   ),
 };
@@ -50,7 +65,9 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
       ]);
       setNotifications(notifList);
       setUnread(unreadData.count);
-    } catch {}
+    } catch {
+      /* noop */
+    }
   }, []);
 
   useEffect(() => {
@@ -63,7 +80,9 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    const socketUrl = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:3001';
+    const socketUrl =
+      (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_URL) ||
+      'http://localhost:3001';
     const socket: Socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
@@ -76,7 +95,9 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
 
     socket.on('connect_error', () => {});
 
-    return () => { socket.disconnect(); };
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -97,9 +118,7 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
 
   const handleMarkRead = async (id: string) => {
     await notificationAPI.markAsRead(id);
-    setNotifications((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, read: true } : n)));
     setUnread((prev) => Math.max(0, prev - 1));
   };
 
@@ -110,7 +129,12 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
         className="relative flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-700/40 transition-all"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+          />
         </svg>
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4.5 h-4.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]">
@@ -148,9 +172,7 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
                 <div
                   key={notif._id?.toString()}
                   className={`flex items-start gap-3 px-4 py-3 border-b border-slate-700/20 transition-colors ${
-                    notif.read
-                      ? 'opacity-60'
-                      : 'bg-accent-500/5 hover:bg-accent-500/10'
+                    notif.read ? 'opacity-60' : 'bg-accent-500/5 hover:bg-accent-500/10'
                   }`}
                   onClick={() => !notif.read && handleMarkRead(notif._id as string)}
                 >
@@ -162,12 +184,8 @@ export default function NotificationBell({ isExpanded }: { isExpanded: boolean }
                     {typeIcons[notif.type]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
-                      {notif.title}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
-                      {notif.message}
-                    </p>
+                    <p className="text-sm font-medium text-white truncate">{notif.title}</p>
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{notif.message}</p>
                     {notif.relatedOccurrence && (
                       <Link
                         href={`/dashboard/occurrences/${notif.relatedOccurrence}`}

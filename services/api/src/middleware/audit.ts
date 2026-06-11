@@ -1,6 +1,7 @@
 import { AuditLog } from '../models/AuditLog';
 import type { AuthRequest } from './auth';
-import type { AuditAction } from '@noc/shared';
+import type { AuditAction } from '@ccore/shared';
+import { logger } from '../utils/logger';
 
 interface AuditEntry {
   action: AuditAction;
@@ -23,7 +24,7 @@ export const logAudit = async (req: AuthRequest, entry: AuditEntry) => {
       userAgent: req.headers['user-agent'],
     });
   } catch (error) {
-    console.error('[audit] Failed to log:', error);
+    logger.error('[audit] Failed to log:', error);
   }
 };
 

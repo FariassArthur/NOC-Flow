@@ -10,7 +10,8 @@ function HeaderRight() {
 
   useEffect(() => {
     const fetch = () => {
-      notificationAPI.unreadCount()
+      notificationAPI
+        .unreadCount()
         .then((data) => setUnread(data.count ?? 0))
         .catch(() => {});
     };
@@ -26,11 +27,29 @@ function HeaderRight() {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 8 }}>
-      <TouchableOpacity onPress={() => router.push('/notifications')} style={{ padding: 8, position: 'relative' }}>
+      <TouchableOpacity
+        onPress={() => router.push('/notifications')}
+        style={{ padding: 8, position: 'relative' }}
+      >
         <Text style={{ color: '#94a3b8', fontSize: 20 }}>🔔</Text>
         {unread > 0 && (
-          <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#f97316', minWidth: 16, height: 16, borderRadius: 8, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4 }}>
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{unread > 9 ? '9+' : unread}</Text>
+          <View
+            style={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              backgroundColor: '#f97316',
+              minWidth: 16,
+              height: 16,
+              borderRadius: 8,
+              justifyContent: 'center',
+              alignItems: 'center',
+              paddingHorizontal: 4,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>
+              {unread > 9 ? '9+' : unread}
+            </Text>
           </View>
         )}
       </TouchableOpacity>
@@ -45,7 +64,8 @@ export default function TabsLayout() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
-    api.get('/api/auth/me')
+    api
+      .get('/api/auth/me')
       .then((res) => setIsAdmin(res.data.role === 'admin'))
       .catch(() => setIsAdmin(false));
   }, []);
@@ -57,7 +77,14 @@ export default function TabsLayout() {
         headerTintColor: '#f1f5f9',
         headerTitleStyle: { fontWeight: '700', fontSize: 18 },
         headerRight: () => <HeaderRight />,
-        tabBarStyle: { backgroundColor: '#1e293b', borderTopColor: '#334155', borderTopWidth: 1, paddingBottom: 6, paddingTop: 6, height: 60 },
+        tabBarStyle: {
+          backgroundColor: '#1e293b',
+          borderTopColor: '#334155',
+          borderTopWidth: 1,
+          paddingBottom: 6,
+          paddingTop: 6,
+          height: 60,
+        },
         tabBarActiveTintColor: '#f97316',
         tabBarInactiveTintColor: '#64748b',
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
@@ -68,7 +95,16 @@ export default function TabsLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 14, fontWeight: 'bold' }}>D</Text>
             </View>
           ),
@@ -79,7 +115,16 @@ export default function TabsLayout() {
         options={{
           title: 'Ocorrências',
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 14, fontWeight: 'bold' }}>O</Text>
             </View>
           ),
@@ -90,7 +135,16 @@ export default function TabsLayout() {
         options={{
           title: 'Relatórios',
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 13, fontWeight: 'bold' }}>R</Text>
             </View>
           ),
@@ -101,7 +155,16 @@ export default function TabsLayout() {
         options={{
           title: 'Runbooks',
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 13, fontWeight: 'bold' }}>B</Text>
             </View>
           ),
@@ -112,7 +175,16 @@ export default function TabsLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 14, fontWeight: 'bold' }}>P</Text>
             </View>
           ),
@@ -122,9 +194,18 @@ export default function TabsLayout() {
         name="admin"
         options={{
           title: 'Admin',
-          href: isAdmin === true ? '/admin/users' : null,
+          href: isAdmin === true ? '/admin' : null,
           tabBarIcon: ({ color }) => (
-            <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: color + '20', justifyContent: 'center', alignItems: 'center' }}>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 4,
+                backgroundColor: color + '20',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
               <Text style={{ color, fontSize: 14, fontWeight: 'bold' }}>A</Text>
             </View>
           ),

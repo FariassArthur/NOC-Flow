@@ -8,6 +8,7 @@ export interface User {
   cargo: string;
   role: 'viewer' | 'analyst' | 'admin';
   avatar?: string;
+  permissions?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

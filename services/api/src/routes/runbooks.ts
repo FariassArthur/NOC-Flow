@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
+import { checkPermission } from '../middleware/permissions';
 import { validateBody } from '../middleware/validation';
-import { runbookSchema } from '@noc/shared';
+import { runbookSchema } from '@ccore/shared';
 import {
   listRunbooks,
   getRunbook,
@@ -16,8 +16,13 @@ router.use(authMiddleware);
 
 router.get('/', listRunbooks);
 router.get('/:id', getRunbook);
-router.post('/', authorize('admin', 'analyst'), validateBody(runbookSchema), createRunbook);
-router.put('/:id', authorize('admin', 'analyst'), validateBody(runbookSchema.partial()), updateRunbook);
-router.delete('/:id', authorize('admin'), deleteRunbook);
+router.post('/', checkPermission('runbooks'), validateBody(runbookSchema), createRunbook);
+router.put(
+  '/:id',
+  checkPermission('runbooks'),
+  validateBody(runbookSchema.partial()),
+  updateRunbook
+);
+router.delete('/:id', checkPermission('runbooks'), deleteRunbook);
 
 export default router;

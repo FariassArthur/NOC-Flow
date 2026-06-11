@@ -26,6 +26,29 @@ export const STATUS_TRANSITIONS: Record<OccurrenceStatus, OccurrenceStatus[]> = 
   finalizada: [],
 };
 
+export const PERMISSIONS = {
+  users: { label: 'Gerenciar Usuários', description: 'Criar, editar e excluir usuários' },
+  departments: { label: 'Gerenciar Setores', description: 'Criar, editar e excluir setores' },
+  categories: { label: 'Gerenciar Categorias', description: 'Criar, editar e excluir categorias' },
+  equipment: {
+    label: 'Gerenciar Equipamentos',
+    description: 'Criar, editar e excluir equipamentos',
+  },
+  services: { label: 'Gerenciar Serviços', description: 'Criar, editar e excluir serviços' },
+  runbooks: { label: 'Gerenciar Runbooks', description: 'Criar, editar e excluir runbooks' },
+  escalations: {
+    label: 'Gerenciar Escalonamentos',
+    description: 'Criar, editar e excluir regras de escalonamento',
+  },
+  templates: {
+    label: 'Gerenciar Templates',
+    description: 'Criar, editar e excluir templates de ocorrências',
+  },
+  audit: { label: 'Visualizar Auditoria', description: 'Acessar logs de auditoria do sistema' },
+} as const;
+
+export type PermissionKey = keyof typeof PERMISSIONS;
+
 export const NOTIFICATION_TYPE_OPTIONS = {
   new_occurrence: { label: 'Nova Ocorrência', color: '#f97316' },
   status_change: { label: 'Mudança de Status', color: '#3b82f6' },

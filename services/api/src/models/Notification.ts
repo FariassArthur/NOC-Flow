@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import type { Notification as NotificationType } from '@noc/shared';
+import type { Notification as NotificationType } from '@ccore/shared';
 
 const notificationSchema = new mongoose.Schema<NotificationType>(
   {
@@ -34,17 +34,21 @@ const notificationSchema = new mongoose.Schema<NotificationType>(
 );
 
 notificationSchema.post('save', function (doc) {
-  import('../services/socketManager').then(({ emitToUser }) => {
-    emitToUser(doc.recipient, 'notification', doc.toObject());
-  }).catch(() => {});
+  import('../services/socketManager')
+    .then(({ emitToUser }) => {
+      emitToUser(doc.recipient, 'notification', doc.toObject());
+    })
+    .catch(() => {});
 });
 
 notificationSchema.post('insertMany', function (docs: any[]) {
-  import('../services/socketManager').then(({ emitToUser }) => {
-    for (const doc of docs) {
-      emitToUser(doc.recipient, 'notification', doc.toObject());
-    }
-  }).catch(() => {});
+  import('../services/socketManager')
+    .then(({ emitToUser }) => {
+      for (const doc of docs) {
+        emitToUser(doc.recipient, 'notification', doc.toObject());
+      }
+    })
+    .catch(() => {});
 });
 
 export const Notification = mongoose.model<NotificationType>('Notification', notificationSchema);

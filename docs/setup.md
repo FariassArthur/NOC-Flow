@@ -1,4 +1,4 @@
-# Setup Detalhado - ProjetoNOC
+# Setup Detalhado - CCore
 
 ## Pré-requisitos
 
@@ -13,7 +13,7 @@
 
 ```bash
 git clone <seu-repo>
-cd ProjetoNOC
+cd CCore
 ```
 
 ### 2. Instalar Dependências
@@ -91,19 +91,19 @@ pnpm dev
 **Terminal 1 - Backend:**
 
 ```bash
-pnpm --filter=@noc/api dev
+pnpm --filter=@ccore/api dev
 ```
 
 **Terminal 2 - Web:**
 
 ```bash
-pnpm --filter=@noc/web dev
+pnpm --filter=@ccore/web dev
 ```
 
 **Terminal 3 - Mobile (Expo):**
 
 ```bash
-pnpm --filter=@noc/mobile start
+pnpm --filter=@ccore/mobile start
 ```
 
 ## Build para Produção
@@ -113,9 +113,9 @@ pnpm --filter=@noc/mobile start
 pnpm build
 
 # Ou build individual:
-pnpm --filter=@noc/api build
-pnpm --filter=@noc/web build
-pnpm --filter=@noc/mobile build
+pnpm --filter=@ccore/api build
+pnpm --filter=@ccore/web build
+pnpm --filter=@ccore/mobile build
 ```
 
 ## MongoDB Atlas Setup
@@ -131,7 +131,7 @@ pnpm --filter=@noc/mobile build
 
 - [ ] Backend rodando: http://localhost:3001/health
 - [ ] Web rodando: http://localhost:3000
-- [ ] Mobile com Expo: Execute `pnpm --filter=@noc/mobile start`
+- [ ] Mobile com Expo: Execute `pnpm --filter=@ccore/mobile start`
 
 ## Primeiros Passos
 

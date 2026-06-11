@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import type { RunbookExecution as RunbookExecutionType } from '@noc/shared';
+import type { RunbookExecution as RunbookExecutionType } from '@ccore/shared';
 
 const stepExecutionSchema = new mongoose.Schema(
   {

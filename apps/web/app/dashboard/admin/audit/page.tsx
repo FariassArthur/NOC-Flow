@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { auditAPI } from '@noc/api-client';
-import type { AuditLog } from '@noc/shared';
+import { auditAPI } from '@ccore/api-client';
+import type { AuditLog } from '@ccore/shared';
 
 const actionLabels: Record<string, string> = {
   login: 'Login',
@@ -49,13 +49,18 @@ export default function AuditPage() {
       const res = await auditAPI.list(params);
       setLogs(res.data);
       setTotalPages(res.totalPages);
-    } catch {}
+    } catch {
+      /* noop */
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     fetchLogs(page);
-    auditAPI.stats().then(setStats).catch(() => {});
+    auditAPI
+      .stats()
+      .then(setStats)
+      .catch(() => {});
   }, [page, actionFilter]);
 
   return (
@@ -82,7 +87,10 @@ export default function AuditPage() {
 
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => { setActionFilter(''); setPage(1); }}
+          onClick={() => {
+            setActionFilter('');
+            setPage(1);
+          }}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${!actionFilter ? 'bg-accent-500/20 text-accent-400' : 'bg-slate-700/40 text-slate-400 hover:text-slate-200'}`}
         >
           Todos
@@ -90,7 +98,10 @@ export default function AuditPage() {
         {Object.entries(actionLabels).map(([key, label]) => (
           <button
             key={key}
-            onClick={() => { setActionFilter(key); setPage(1); }}
+            onClick={() => {
+              setActionFilter(key);
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${actionFilter === key ? 'bg-accent-500/20 text-accent-400' : 'bg-slate-700/40 text-slate-400 hover:text-slate-200'}`}
           >
             {label}
@@ -117,20 +128,29 @@ export default function AuditPage() {
               </thead>
               <tbody>
                 {logs.map((log) => (
-                  <tr key={log._id?.toString()} className="border-b border-slate-700/20 hover:bg-slate-700/20 transition-colors">
+                  <tr
+                    key={log._id?.toString()}
+                    className="border-b border-slate-700/20 hover:bg-slate-700/20 transition-colors"
+                  >
                     <td className="py-3 px-4 text-slate-300 whitespace-nowrap">
                       {new Date(log.createdAt).toLocaleString('pt-BR')}
                     </td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-md text-xs font-medium ${actionColors[log.action] || 'bg-slate-500/10 text-slate-400'}`}>
+                      <span
+                        className={`px-2 py-1 rounded-md text-xs font-medium ${actionColors[log.action] || 'bg-slate-500/10 text-slate-400'}`}
+                      >
                         {actionLabels[log.action] || log.action}
                       </span>
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-slate-200">{log.userName || '-'}</div>
-                      {log.userDepartment && <div className="text-xs text-slate-500">{log.userDepartment}</div>}
+                      {log.userDepartment && (
+                        <div className="text-xs text-slate-500">{log.userDepartment}</div>
+                      )}
                     </td>
-                    <td className="py-3 px-4 text-slate-400 max-w-xs truncate">{log.details || '-'}</td>
+                    <td className="py-3 px-4 text-slate-400 max-w-xs truncate">
+                      {log.details || '-'}
+                    </td>
                     <td className="py-3 px-4 text-slate-500 text-xs font-mono">{log.ip || '-'}</td>
                   </tr>
                 ))}
@@ -142,7 +162,7 @@ export default function AuditPage() {
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-4 pb-4">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/40 text-slate-300 disabled:opacity-40"
             >
@@ -152,7 +172,7 @@ export default function AuditPage() {
               Página {page} de {totalPages}
             </span>
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
               className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/40 text-slate-300 disabled:opacity-40"
             >

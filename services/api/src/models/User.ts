@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import type { User as UserType } from '@noc/shared';
+import type { User as UserType } from '@ccore/shared';
 
 const userSchema = new mongoose.Schema<UserType>(
   {
@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema<UserType>(
       type: String,
       enum: ['viewer', 'analyst', 'admin'],
       default: 'analyst',
+    },
+    permissions: {
+      type: [String],
+      default: [],
     },
     avatar: String,
   },

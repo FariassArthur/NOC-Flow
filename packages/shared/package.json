@@ -1,7 +1,7 @@
 {
-  "name": "@noc/shared",
+  "name": "@ccore/shared",
   "version": "1.0.0",
-  "description": "NOC Shared Types and Utilities",
+  "description": "CCore Shared Types and Utilities",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,12 @@
     "build": "tsc",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["noc", "shared", "types", "utilities"],
+  "keywords": [
+    "ccore",
+    "shared",
+    "types",
+    "utilities"
+  ],
   "author": "Network Analysis Team",
   "license": "MIT",
   "dependencies": {

@@ -1,4 +1,4 @@
-# Contributing to ProjetoNOC
+# Contributing to CCore
 
 ## Convenções do Projeto
 
@@ -18,6 +18,7 @@ git commit -m "update"
 ```
 
 **Prefixos:**
+
 - `feat:` - Nova funcionalidade
 - `fix:` - Correção de bug
 - `docs:` - Documentação
@@ -57,7 +58,7 @@ export interface Notification {
 }
 
 // packages/shared/src/types/index.ts
-export * from './notification';  // ← adicionar
+export * from './notification'; // ← adicionar
 ```
 
 ## Adicionando Validações
@@ -112,7 +113,7 @@ Coloque componentes em `apps/web/components/`:
 // apps/web/components/OccurrenceCard.tsx
 'use client';
 
-import { Occurrence } from '@noc/shared';
+import { Occurrence } from '@ccore/shared';
 
 interface OccurrenceCardProps {
   occurrence: Occurrence;
@@ -150,16 +151,16 @@ export default function HomeScreen() {
 
 ```bash
 # Web
-pnpm --filter=@noc/web test
+pnpm --filter=@ccore/web test
 
 # API
-pnpm --filter=@noc/api test
+pnpm --filter=@ccore/api test
 
 # Shared
-pnpm --filter=@noc/shared test
+pnpm --filter=@ccore/shared test
 
 # Coverage
-pnpm --filter=@noc/api test -- --coverage
+pnpm --filter=@ccore/api test -- --coverage
 ```
 
 ## Code Quality
@@ -178,18 +179,21 @@ pnpm type-check
 ## Performance Tips
 
 ### Frontend
+
 - Use `React.memo()` para componentes heavy
 - `useMemo()` e `useCallback()` com cuidado (não prematuramente)
 - Code splitting automático com Next.js
 - Image optimization built-in
 
 ### Backend
+
 - Sempre paginar: `limit(20).skip(offset)`
 - Index campos frequentes em queries
 - Validar input com Zod antes de DB
 - Usar `select()` para não retornar password
 
 ### Mobile
+
 - Lazy load imagens
 - Cache responses com SWR
 - Minimize bundle size
@@ -208,18 +212,21 @@ pnpm type-check
 ## Deploying
 
 ### Web (Vercel)
+
 ```bash
 git push origin main
 # Deploy automático via Vercel
 ```
 
 ### API (Render/Railway)
+
 ```bash
 git push origin main
 # Deploy automático via Render/Railway
 ```
 
 ### Mobile (EAS)
+
 ```bash
 eas build --platform ios
 eas build --platform android
@@ -229,18 +236,22 @@ eas build --platform android
 
 ```markdown
 ## Description
+
 O que mudou e por quê?
 
 ## Type
+
 - [ ] Feature
 - [ ] Bug fix
 - [ ] Documentation
 - [ ] Refactor
 
 ## Testing
+
 Como testar?
 
 ## Checklist
+
 - [ ] Code segue conventions
 - [ ] Tests passam
 - [ ] Documentação atualizada

@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "@noc/mobile",
-    "slug": "projetonoc-mobile",
+    "name": "@ccore/mobile",
+    "slug": "ccore-mobile",
     "version": "1.0.0",
-    "scheme": "projetonoc",
+    "scheme": "ccore",
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTabletMode": true

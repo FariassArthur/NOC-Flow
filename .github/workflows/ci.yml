@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        workspace: [shared, api-client, api, web, mobile]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Type check (${{ matrix.workspace }})
+        run: pnpm --filter @ccore/${{ matrix.workspace }} type-check
+
+      - name: Lint (${{ matrix.workspace }})
+        run: pnpm --filter @ccore/${{ matrix.workspace }} lint || true
+
+      - name: Test
+        if: matrix.workspace == 'shared'
+        run: pnpm test
+
+      - name: Build (${{ matrix.workspace }})
+        if: matrix.workspace != 'mobile'
+        run: pnpm --filter @ccore/${{ matrix.workspace }} build

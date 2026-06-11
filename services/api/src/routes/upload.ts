@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { authMiddleware } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 
@@ -25,7 +26,20 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.zip', '.rar'];
+    const allowed = [
+      '.jpg',
+      '.jpeg',
+      '.png',
+      '.gif',
+      '.pdf',
+      '.doc',
+      '.docx',
+      '.xls',
+      '.xlsx',
+      '.txt',
+      '.zip',
+      '.rar',
+    ];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowed.includes(ext)) {
       cb(null, true);
@@ -51,7 +65,7 @@ router.post('/', upload.single('file'), (req: Request, res: Response) => {
       size: req.file.size,
     });
   } catch (error: any) {
-    console.error('[upload]', error.message);
+    logger.error('[upload]', error.message);
     res.status(400).json({ error: 'Erro ao fazer upload' });
   }
 });

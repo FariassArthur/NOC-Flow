@@ -1,2 +1,33 @@
-export { apiClient } from './client';
-export * from './endpoints';
+export { apiClient, APIClient } from './client';
+export type { StorageAdapter } from './client';
+export {
+  createAllEndpoints,
+  createAuthAPI,
+  createOccurrenceAPI,
+  createCategoryAPI,
+  createEquipmentAPI,
+  createServiceAPI,
+  createRunbookAPI,
+  createEscalationAPI,
+  createUserAPI,
+  createNotificationAPI,
+  createRunbookExecutionAPI,
+  createAuditAPI,
+  createReportAPI,
+  createDepartmentAPI,
+  createTemplateAPI,
+  authAPI,
+  occurrenceAPI,
+  categoryAPI,
+  equipmentAPI,
+  serviceAPI,
+  runbookAPI,
+  escalationAPI,
+  userAPI,
+  notificationAPI,
+  runbookExecutionAPI,
+  auditAPI,
+  reportAPI,
+  departmentAPI,
+  templateAPI,
+} from './endpoints';

@@ -2,15 +2,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ProjetoNOC - Network Occurrence Management',
+  title: 'CCore - Network Occurrence Management',
   description: 'Sistema de gerenciamento de ocorrências para análise de redes',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="dark">
       <body className="bg-slate-900 text-slate-100 min-h-screen">{children}</body>

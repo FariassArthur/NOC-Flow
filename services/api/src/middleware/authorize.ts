@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { User } from '../models/User';
 import type { AuthRequest } from './auth';
+import { logger } from '../utils/logger';
 
 export const authorize = (...allowedRoles: string[]) => {
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -10,12 +11,14 @@ export const authorize = (...allowedRoles: string[]) => {
         return res.status(401).json({ error: 'Usuário não encontrado' });
       }
       if (!allowedRoles.includes(user.role)) {
-        return res.status(403).json({ error: 'Acesso restrito. Permissão necessária: ' + allowedRoles.join(', ') });
+        return res
+          .status(403)
+          .json({ error: 'Acesso restrito. Permissão necessária: ' + allowedRoles.join(', ') });
       }
       req.user = user;
       next();
     } catch (error: any) {
-      console.error('[authorize]', error.message);
+      logger.error('[authorize]', error.message);
       res.status(400).json({ error: 'Erro de autorização' });
     }
   };
@@ -31,7 +34,7 @@ export const authorizeNoc = () => {
       req.user = user;
       next();
     } catch (error: any) {
-      console.error('[authorizeNoc]', error.message);
+      logger.error('[authorizeNoc]', error.message);
       res.status(400).json({ error: 'Erro de autorização' });
     }
   };

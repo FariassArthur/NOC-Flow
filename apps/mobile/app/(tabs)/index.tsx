@@ -1,8 +1,16 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+  Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { occurrenceAPI, authAPI } from '../../lib/api';
-import { statusCount, priorityCount } from '@noc/shared';
+import { statusCount, priorityCount } from '@ccore/shared';
 import StatusBadge from '../../components/StatusBadge';
 import PriorityBadge from '../../components/PriorityBadge';
 import PieChart from '../../components/Charts/PieChart';
@@ -10,12 +18,15 @@ import BarChart from '../../components/Charts/BarChart';
 import LineChart from '../../components/Charts/LineChart';
 
 function groupBy<T>(arr: T[], fn: (item: T) => string): Record<string, T[]> {
-  return arr.reduce((acc, item) => {
-    const key = fn(item);
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+  return arr.reduce(
+    (acc, item) => {
+      const key = fn(item);
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>
+  );
 }
 
 const screenWidth = Dimensions.get('window').width;
@@ -35,10 +46,14 @@ export default function Dashboard() {
       ]);
       setOccurrences(occRes.data || occRes || []);
       setUser(me);
-    } catch {}
+    } catch {
+      /* noop */
+    }
   }, []);
 
-  useEffect(() => { fetchData().finally(() => setLoading(false)); }, []);
+  useEffect(() => {
+    fetchData().finally(() => setLoading(false));
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -69,7 +84,10 @@ export default function Dashboard() {
   const timelineData = (() => {
     const buckets: Record<string, number> = {};
     occurrences.forEach((o) => {
-      const d = new Date(o.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const d = new Date(o.createdAt).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+      });
       buckets[d] = (buckets[d] || 0) + 1;
     });
     return Object.entries(buckets)
@@ -86,29 +104,49 @@ export default function Dashboard() {
 
   const userStats = (() => {
     const groups = groupBy(occurrences, (o) => o.createdBy?.fullName || 'Desconhecido');
-    return Object.entries(groups).map(([name, occs]) => ({
-      name,
-      total: occs.length,
-      abertas: occs.filter((o) => o.status === 'aberta').length,
-      execucao: occs.filter((o) => o.status === 'em_execucao').length,
-      finalizadas: occs.filter((o) => o.status === 'finalizada').length,
-    })).sort((a, b) => b.total - a.total);
+    return Object.entries(groups)
+      .map(([name, occs]) => ({
+        name,
+        total: occs.length,
+        abertas: occs.filter((o) => o.status === 'aberta').length,
+        execucao: occs.filter((o) => o.status === 'em_execucao').length,
+        finalizadas: occs.filter((o) => o.status === 'finalizada').length,
+      }))
+      .sort((a, b) => b.total - a.total);
   })();
 
   const recent = occurrences.slice(0, 5);
 
-  const cardStyle = { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#334155' };
+  const cardStyle = {
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  };
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#0f172a',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <ActivityIndicator size="large" color="#f97316" />
       </View>
     );
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#0f172a' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#0f172a' }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#f97316" />
+      }
+    >
       <View style={{ padding: 16, gap: 16 }}>
         {user && (
           <Text style={{ color: '#94a3b8', fontSize: 14 }}>
@@ -119,7 +157,18 @@ export default function Dashboard() {
         {/* Stats cards */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
           {stats.map((s) => (
-            <View key={s.label} style={{ flex: 1, minWidth: '45%', ...cardStyle, shadowColor: '#f97316', shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+            <View
+              key={s.label}
+              style={{
+                flex: 1,
+                minWidth: '45%',
+                ...cardStyle,
+                shadowColor: '#f97316',
+                shadowOpacity: 0.05,
+                shadowRadius: 12,
+                elevation: 2,
+              }}
+            >
               <Text style={{ color: s.color, fontSize: 28, fontWeight: '800' }}>{s.value}</Text>
               <Text style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>{s.label}</Text>
             </View>
@@ -130,18 +179,26 @@ export default function Dashboard() {
         {occurrences.length > 0 && (
           <>
             <View style={cardStyle}>
-              <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>Status</Text>
+              <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>
+                Status
+              </Text>
               <PieChart data={statusPie} size={Math.min(screenWidth - 64, 160)} />
             </View>
 
             <View style={cardStyle}>
-              <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>Prioridade</Text>
+              <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>
+                Prioridade
+              </Text>
               <BarChart data={priorityBars} width={Math.min(screenWidth - 32, 320)} />
             </View>
 
             {timelineData.length > 1 && (
               <View style={cardStyle}>
-                <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>Ocorrências ao longo do tempo</Text>
+                <Text
+                  style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}
+                >
+                  Ocorrências ao longo do tempo
+                </Text>
                 <LineChart data={timelineData} width={Math.min(screenWidth - 32, 320)} />
               </View>
             )}
@@ -151,11 +208,22 @@ export default function Dashboard() {
         {/* Occurrences per user */}
         {userStats.length > 0 && (
           <View style={cardStyle}>
-            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>Ocorrências por Usuário</Text>
+            <Text style={{ color: '#f1f5f9', fontWeight: '700', fontSize: 15, marginBottom: 12 }}>
+              Ocorrências por Usuário
+            </Text>
             <View style={{ gap: 8 }}>
               {userStats.slice(0, 8).map((u) => (
-                <View key={u.name} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ color: '#cbd5e1', fontSize: 13, flex: 1 }} numberOfLines={1}>{u.name}</Text>
+                <View
+                  key={u.name}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#cbd5e1', fontSize: 13, flex: 1 }} numberOfLines={1}>
+                    {u.name}
+                  </Text>
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     <Text style={{ color: '#f87171', fontSize: 12 }}>{u.abertas}</Text>
                     <Text style={{ color: '#fbbf24', fontSize: 12 }}>{u.execucao}</Text>
@@ -171,29 +239,56 @@ export default function Dashboard() {
         {/* Recent occurrences */}
         {occurrences.length === 0 ? (
           <View style={{ ...cardStyle, alignItems: 'center', padding: 32 }}>
-            <Text style={{ color: '#94a3b8', fontSize: 15, marginBottom: 16 }}>Nenhuma ocorrência ainda</Text>
+            <Text style={{ color: '#94a3b8', fontSize: 15, marginBottom: 16 }}>
+              Nenhuma ocorrência ainda
+            </Text>
             <TouchableOpacity
               onPress={() => router.push('/occurrences/new')}
-              style={{ backgroundColor: '#f97316', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
+              style={{
+                backgroundColor: '#f97316',
+                borderRadius: 12,
+                paddingHorizontal: 24,
+                paddingVertical: 12,
+              }}
             >
               <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>Criar Primeira</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
-            <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700' }}>Ocorrências Recentes</Text>
+            <Text style={{ color: '#f1f5f9', fontSize: 16, fontWeight: '700' }}>
+              Ocorrências Recentes
+            </Text>
             {recent.map((occ: any) => (
               <TouchableOpacity
                 key={occ._id}
                 onPress={() => router.push(`/occurrences/${occ._id}`)}
                 style={cardStyle}
               >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                  }}
+                >
                   <View style={{ flex: 1, marginRight: 8 }}>
-                    <Text style={{ color: '#f1f5f9', fontWeight: '600', fontSize: 15, marginBottom: 4 }} numberOfLines={1}>{occ.title}</Text>
-                    <Text style={{ color: '#64748b', fontSize: 12, marginBottom: 4 }} numberOfLines={1}>{occ.description}</Text>
+                    <Text
+                      style={{ color: '#f1f5f9', fontWeight: '600', fontSize: 15, marginBottom: 4 }}
+                      numberOfLines={1}
+                    >
+                      {occ.title}
+                    </Text>
+                    <Text
+                      style={{ color: '#64748b', fontSize: 12, marginBottom: 4 }}
+                      numberOfLines={1}
+                    >
+                      {occ.description}
+                    </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Text style={{ color: '#64748b', fontSize: 11 }}>{occ.createdBy?.fullName || 'N/A'}</Text>
+                      <Text style={{ color: '#64748b', fontSize: 11 }}>
+                        {occ.createdBy?.fullName || 'N/A'}
+                      </Text>
                       <Text style={{ color: '#475569', fontSize: 11 }}>
                         {new Date(occ.createdAt).toLocaleDateString('pt-BR')}
                       </Text>

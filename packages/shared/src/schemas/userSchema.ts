@@ -3,7 +3,10 @@ import { z } from 'zod';
 export const userSchema = z.object({
   username: z.string().min(3, 'Usuário deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
   fullName: z.string().min(2, 'Nome completo é obrigatório'),
   department: z.string().min(1, 'Departamento é obrigatório'),
   cargo: z.string().min(1, 'Cargo é obrigatório'),
@@ -14,12 +17,16 @@ export const userSchema = z.object({
 export const userRegisterSchema = z.object({
   username: z.string().min(3, 'Usuário deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
   fullName: z.string().min(2, 'Nome completo é obrigatório'),
-  department: z.string()
+  department: z
+    .string()
     .min(1, 'Departamento é obrigatório')
     .refine((dept) => dept.toUpperCase() !== 'NOC', {
-      message: 'O setor NOC só pode ser criado por um administrador'
+      message: 'O setor NOC só pode ser criado por um administrador',
     }),
   cargo: z.string().min(1, 'Cargo é obrigatório'),
   role: z.enum(['viewer', 'analyst']).default('viewer'),
@@ -29,7 +36,10 @@ export const userRegisterSchema = z.object({
 export const userNocSchema = z.object({
   username: z.string().min(3, 'Usuário deve ter pelo menos 3 caracteres'),
   email: z.string().email('Email inválido'),
-  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres').regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
+  password: z
+    .string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter maiúscula, minúscula e número'),
   fullName: z.string().min(2, 'Nome completo é obrigatório'),
   department: z.literal('NOC'),
   cargo: z.string().min(1, 'Cargo é obrigatório'),
@@ -43,6 +53,7 @@ export const userUpdateSchema = z.object({
   department: z.string().min(1, 'Departamento é obrigatório').optional(),
   cargo: z.string().min(1, 'Cargo é obrigatório').optional(),
   role: z.enum(['viewer', 'analyst', 'admin']).optional(),
+  permissions: z.array(z.string()).optional(),
   avatar: z.string().optional(),
 });
 

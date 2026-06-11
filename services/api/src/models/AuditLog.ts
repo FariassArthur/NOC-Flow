@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import type { AuditLog as AuditLogType } from '@noc/shared';
+import type { AuditLog as AuditLogType } from '@ccore/shared';
 
 const auditLogSchema = new mongoose.Schema<AuditLogType>(
   {

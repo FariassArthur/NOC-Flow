@@ -1,7 +1,7 @@
 {
-  "name": "@noc/web",
+  "name": "@ccore/web",
   "version": "1.0.0",
-  "description": "NOC Web Application",
+  "description": "CCore Web Application",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,15 +10,15 @@
     "type-check": "tsc --noEmit"
   },
   "keywords": [
-    "noc",
+    "ccore",
     "next.js",
     "react"
   ],
   "author": "Network Analysis Team",
   "license": "MIT",
   "dependencies": {
-    "@noc/api-client": "workspace:*",
-    "@noc/shared": "workspace:*",
+    "@ccore/api-client": "workspace:*",
+    "@ccore/shared": "workspace:*",
     "axios": "^1.6.7",
     "next": "15.0.0",
     "react": "19.0.0",

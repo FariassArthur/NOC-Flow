@@ -1,8 +1,8 @@
-# Arquitetura - ProjetoNOC
+# Arquitetura - CCore
 
 ## Visão Geral
 
-ProjetoNOC é um sistema de gerenciamento de ocorrências construído como um **monorepo** com tecnologias modernas para web e mobile.
+CCore é um sistema de gerenciamento de ocorrências construído como um **monorepo** com tecnologias modernas para web e mobile.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -25,6 +25,7 @@ ProjetoNOC é um sistema de gerenciamento de ocorrências construído como um **
 ## Monorepo Structure
 
 ### apps/
+
 Aplicações cliente (web e mobile)
 
 - **web/**: Next.js 15 app router
@@ -40,6 +41,7 @@ Aplicações cliente (web e mobile)
   - Mesmo API client que web
 
 ### services/
+
 Backend e APIs
 
 - **api/**: Express.js server
@@ -49,6 +51,7 @@ Backend e APIs
   - Zod para validação
 
 ### packages/
+
 Código compartilhado entre web e mobile
 
 - **shared/**: Types e utilities
@@ -114,11 +117,13 @@ Código compartilhado entre web e mobile
 **Escolhido:** Monorepo com pnpm workspaces
 
 **Vantagens:**
+
 - Compartilhamento fácil de código (types, schemas, utilitários)
 - Versionamento atomic (todas as partes evoluem juntas)
 - CI/CD mais simples
 
 **Desvantagens:**
+
 - Curva de aprendizado maior
 - Requer coordenação ao refatorar
 
@@ -127,12 +132,14 @@ Código compartilhado entre web e mobile
 **Escolhido:** MongoDB com Mongoose
 
 **Razões:**
+
 - Flexibilidade de schema (ótimo para MVP)
 - MongoDB Atlas gratuito
 - Documento denormalizado ideal para ocorrências
 - Ecossistema Node.js maduro
 
 **Alternativas descartadas:**
+
 - PostgreSQL: Schema rígido, overkill inicial
 - Firebase: Menos controle, mais caro
 - DynamoDB: Complexo para começar
@@ -142,6 +149,7 @@ Código compartilhado entre web e mobile
 **Escolhido:** JWT (stateless)
 
 **Razões:**
+
 - Melhor para APIs REST
 - Funciona bem em mobile
 - Escalável (sem estado no servidor)
@@ -152,12 +160,14 @@ Código compartilhado entre web e mobile
 **Escolhido:** Express
 
 **Razões:**
+
 - Simples e bem documentado
 - Ecossistema grande
 - Middleware pattern familiar
 - Rápido para MVPs
 
 **Alternativas:**
+
 - NestJS: Melhor arquitetura, mais boilerplate
 - Fastify: Mais rápido, menos maduro
 - Next.js API routes: Possível, mas Express é mais flexível
@@ -167,6 +177,7 @@ Código compartilhado entre web e mobile
 **Escolhido:** Next.js 15
 
 **Razões:**
+
 - SSR built-in (melhor SEO)
 - App Router moderno
 - API routes integradas (se necessário)
@@ -175,17 +186,20 @@ Código compartilhado entre web e mobile
 ## Escalabilidade
 
 ### Curto Prazo (MVP)
+
 - MongoDB Atlas M0 (gratuito)
 - Express em um único processo
 - Deploy: Vercel (web), Render/Railway (API)
 
 ### Médio Prazo
+
 - Cache com Redis
 - Pagination para ocorrências
 - Database indices em campos frequentes
 - Load balancing
 
 ### Longo Prazo
+
 - Microserviços
 - Message queue (RabbitMQ/Kafka)
 - Real-time com WebSockets
@@ -214,17 +228,20 @@ Código compartilhado entre web e mobile
 ## Performance
 
 ### Frontend
+
 - Next.js automatic code splitting
 - Image optimization
 - CSS-in-JS com Tailwind (atomic CSS)
 - React.memo para componentes heavy
 
 ### Backend
+
 - MongoDB index em `status`, `assignedTo`
 - Pagination automática (limit/offset)
 - JSON responses otimizadas
 
 ### Mobile
+
 - Lazy loading de ocorrências
 - Image caching
 - Bundle size otimizado

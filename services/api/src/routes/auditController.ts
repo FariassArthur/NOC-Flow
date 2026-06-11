@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuditLog } from '../models/AuditLog';
 import type { AuthRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 export const listAuditLogs = async (req: AuthRequest, res: Response) => {
   try {
@@ -16,10 +17,7 @@ export const listAuditLogs = async (req: AuthRequest, res: Response) => {
     const skip = (pageNum - 1) * limitNum;
 
     const [logs, total] = await Promise.all([
-      AuditLog.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limitNum),
+      AuditLog.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limitNum),
       AuditLog.countDocuments(filter),
     ]);
 
@@ -30,7 +28,7 @@ export const listAuditLogs = async (req: AuthRequest, res: Response) => {
       totalPages: Math.ceil(total / limitNum),
     });
   } catch (error: any) {
-    console.error('[listAuditLogs]', error.message);
+    logger.error('[listAuditLogs]', error.message);
     res.status(400).json({ error: 'Erro ao listar logs de auditoria' });
   }
 };
@@ -41,7 +39,7 @@ export const getAuditLog = async (req: AuthRequest, res: Response) => {
     if (!log) return res.status(404).json({ error: 'Log não encontrado' });
     res.json(log);
   } catch (error: any) {
-    console.error('[getAuditLog]', error.message);
+    logger.error('[getAuditLog]', error.message);
     res.status(400).json({ error: 'Erro ao buscar log' });
   }
 };
@@ -63,7 +61,7 @@ export const getAuditStats = async (req: AuthRequest, res: Response) => {
 
     res.json({ totalLogs, actions, recentLogins });
   } catch (error: any) {
-    console.error('[getAuditStats]', error.message);
+    logger.error('[getAuditStats]', error.message);
     res.status(400).json({ error: 'Erro ao buscar estatísticas de auditoria' });
   }
 };

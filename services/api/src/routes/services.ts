@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth';
-import { authorize } from '../middleware/authorize';
+import { checkPermission } from '../middleware/permissions';
 import { validateBody } from '../middleware/validation';
-import { serviceSchema } from '@noc/shared';
+import { serviceSchema } from '@ccore/shared';
 import {
   listServices,
   getService,
@@ -16,8 +16,13 @@ router.use(authMiddleware);
 
 router.get('/', listServices);
 router.get('/:id', getService);
-router.post('/', authorize('admin', 'analyst'), validateBody(serviceSchema), createService);
-router.put('/:id', authorize('admin', 'analyst'), validateBody(serviceSchema.partial()), updateService);
-router.delete('/:id', authorize('admin'), deleteService);
+router.post('/', checkPermission('services'), validateBody(serviceSchema), createService);
+router.put(
+  '/:id',
+  checkPermission('services'),
+  validateBody(serviceSchema.partial()),
+  updateService
+);
+router.delete('/:id', checkPermission('services'), deleteService);
 
 export default router;
